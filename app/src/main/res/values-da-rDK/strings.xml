@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">au522133 Word Learner 2</string>
+    <string name="name_of_the_word">Navnet på ordet</string>
+    <string name="pronoucing">Udtalelse</string>
+    <string name="pronouncing">Udtalelse</string>
+    <string name="description">"Beskrivelse: "</string>
+    <string name="cancel">Annulerer</string>
+    <string name="ok">OK</string>
+    <string name="word_rating">Ord bedømmelse:</string>
+    <string name="rating">Bedømmelse</string>
+    <string name="notes">Noter</string>
+    <string name="write_notes_here">Skriv dine noter her</string>
+    <string name="edit">Redigere</string>
+    <string name="text">Tekst</string>
+    <string name="my_words">Mine ord:</string>
+    <string name="notesDetails">Noter:</string>
+    <string name="notes_text">Notatekstext</string>
+    <string name="defaultlogo">Standard logo</string>
+    <string name="defaultRating">0.0</string>
+    <string name="exit">Afslut</string>
+    <string name="description_text">Beskrivelsestekst</string>
+    <string name="user_s_notes" >Brugerens notater</string>
+    <string name="add">Tilføj</string>
+    <string name="delete">Slet</string>
+    <string name="update">Opdatere</string>
+    <string name="definition">Definition</string>
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#79CCE0</color>
+    <color name="colorPrimaryDark">#79CCE0</color>
+    <color name="colorAccent">#D81B60</color>
+    <color name="colorBackground">#CBECF5</color>
+    <color name="colorBtn">#79CCE0</color>
+    <color name="navigationBarColor">#79CCE0</color>
+</resources>
+
+<!--
+In connection with designing the app, there has been taken inspiration from following links:
+
+https://devblog.axway.com/mobile-apps/understanding-the-android-material-theme/
+https://color.adobe.com/da/create
+
+-->
+
+
+

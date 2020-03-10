@@ -1,0 +1,39 @@
+<resources>
+    <string name="app_name">au522133 Word Learner 2</string>
+    <string name="name_of_the_word">Name of the word</string>
+    <string name="pronoucing">Pronouncement</string>
+    <string name="pronouncing">Pronouncement</string>
+    <string name="description">Description: </string>
+    <string name="cancel">CANCEL</string>
+    <string name="ok">OK</string>
+    <string name="word_rating">Word Rating:</string>
+    <string name="rating">Rating</string>
+    <string name="notes">Notes</string>
+    <string name="write_notes_here">Write Notes here</string>
+    <string name="edit">EDIT</string>
+    <string name="text">Text</string>
+    <string name="my_words">My Words:</string>
+    <string name="exit">EXIT</string>
+    <string name="description_text">Description text</string>
+    <string name="notesDetails">Notes: </string>
+    <string name="notes_text">Notes text</string>
+    <string name="defaultlogo">defaultLogo</string>
+    <string name="defaultRating">0.0</string>
+    <string name="user_s_notes">User\'s notes</string>
+    <string name="key_picture" translatable="false">picture</string>
+    <string name="key_name" translatable="false">name</string>
+    <string name="key_pronouncing" translatable="false">pronouncing</string>
+    <string name="key_description" translatable="false">description</string>
+    <string name="key_rating" translatable="false">rating</string>
+    <string name="key_notes" translatable="false">notes</string>
+    <string name="key_wordlist" translatable="false">wordItem</string>
+    <string name="key_position" translatable="false">position</string>
+    <string name="key_orientationchange" translatable="false">Orientation switch</string>
+    <string name="title_listactivity" translatable="false">Word Learner2 - ListActivity </string>
+    <string name="title_detailsactivity" translatable="false">Word Learner2 - DetailsActivity </string>
+    <string name="title_editactivity" translatable="false">Word Learner2 - EditActivity </string>
+    <string name="add">ADD</string>
+    <string name="delete">Delete</string>
+    <string name="update">Update</string>
+    <string name="definition">Definition</string>
+</resources>
