@@ -34,14 +34,26 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'com.android.volley:volley:1.1.1'
 
-    def room_version = "2.2.4"
+    // Room components
+    implementation "androidx.room:room-runtime:$rootProject.roomVersion"
+    annotationProcessor "androidx.room:room-compiler:$rootProject.roomVersion"
+    androidTestImplementation "androidx.room:room-testing:$rootProject.roomVersion"
 
-    implementation "androidx.room:room-runtime:$room_version"
-    annotationProcessor "androidx.room:room-compiler:$room_version"
-    implementation "androidx.room:room-ktx:$room_version"
-    implementation "androidx.room:room-rxjava2:$room_version"
-    implementation "androidx.room:room-guava:$room_version"
+    // Lifecycle components
+    implementation "androidx.lifecycle:lifecycle-extensions:$rootProject.archLifecycleVersion"
+    annotationProcessor "androidx.lifecycle:lifecycle-compiler:$rootProject.archLifecycleVersion"
 
-    // Test helpers
-    testImplementation "androidx.room:room-testing:$room_version"
+    // UI
+    implementation "com.google.android.material:material:$rootProject.materialVersion"
+
+    // Testing
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation "androidx.arch.core:core-testing:$rootProject.coreTestingVersion"
+    androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+
+    implementation 'com.facebook.stetho:stetho:1.5.0'
+    implementation 'com.facebook.stetho:stetho-okhttp:1.5.0'
 }

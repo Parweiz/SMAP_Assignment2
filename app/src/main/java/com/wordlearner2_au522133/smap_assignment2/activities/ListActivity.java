@@ -21,6 +21,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.facebook.stetho.Stetho;
 import com.wordlearner2_au522133.smap_assignment2.R;
 import com.wordlearner2_au522133.smap_assignment2.adapter.WordLearnerAdapter;
 import com.wordlearner2_au522133.smap_assignment2.models.WordLearnerParcelable;
@@ -68,6 +69,7 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
             insertWords();
         }
 
+        enableStethos();
         setUpExitBtn();
         setUpRecyclerView();
 
@@ -232,6 +234,25 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
 
         );
         requestQueue.add(jsonObjectRequest);
+    }
+
+    // Taget fra Room demo i lektion4
+    private void enableStethos(){
+
+           /* Stetho initialization - allows for debugging features in Chrome browser
+           See http://facebook.github.io/stetho/ for details
+           1) Open chrome://inspect/ in a Chrome browse
+           2) select 'inspect' on your app under the specific device/emulator
+           3) select resources tab
+           4) browse database tables under Web SQL
+         */
+        Stetho.initialize(Stetho.newInitializerBuilder(this)
+                .enableDumpapp(
+                        Stetho.defaultDumperPluginsProvider(this))
+                .enableWebKitInspector(
+                        Stetho.defaultInspectorModulesProvider(this))
+                .build());
+        /* end Stethos */
     }
 
 

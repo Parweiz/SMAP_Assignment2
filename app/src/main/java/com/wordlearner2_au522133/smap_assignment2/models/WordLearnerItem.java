@@ -1,15 +1,30 @@
 package com.wordlearner2_au522133.smap_assignment2.models;
 
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
 import java.io.Serializable;
 
+@Entity(tableName = "wordlearner2_word_table")
 public class WordLearnerItem implements Serializable {
+    @PrimaryKey(autoGenerate = true)
+    private int uid;
+
+    @ColumnInfo(name = "Picture")
     private int mImageResource;
-    private String word;
-    private String pronouncing;
-    private String description;
-    private String rating;
-    private String notes;
+    @ColumnInfo(name = "Word Position")
     private int wordPosition;
+    @ColumnInfo(name = "Name of the word")
+    private String word;
+    @ColumnInfo(name = "Pronunciation")
+    private String pronouncing;
+    @ColumnInfo(name = "Description")
+    private String description;
+    @ColumnInfo(name = "Rating")
+    private String rating;
+    @ColumnInfo(name = "Notes")
+    private String notes;
 
     public WordLearnerItem(int mImageResource, int wordPosition, String word, String pronouncing, String description, String rating){
         this.mImageResource = mImageResource;
@@ -20,6 +35,15 @@ public class WordLearnerItem implements Serializable {
         this.rating = rating;
     }
 
+    public int getUid() {
+        return uid;
+    }
+
+    public void setUid(int uid) {
+        this.uid = uid;
+    }
+
+
     public int getImageResource() {
         return mImageResource;
     }
@@ -27,6 +51,7 @@ public class WordLearnerItem implements Serializable {
     public void setImageResource(int mImageResource) {
         this.mImageResource = mImageResource;
     }
+
 
     public String getWord() {
         return word;
@@ -36,6 +61,7 @@ public class WordLearnerItem implements Serializable {
         this.word = word;
     }
 
+
     public String getPronouncing() {
         return pronouncing;
     }
@@ -43,6 +69,7 @@ public class WordLearnerItem implements Serializable {
     public void setPronouncing(String pronouncing) {
         this.pronouncing = pronouncing;
     }
+
 
     public String getDescription() {
         return description;
@@ -52,6 +79,7 @@ public class WordLearnerItem implements Serializable {
         this.description = description;
     }
 
+
     public String getRating() {
         return rating;
     }
@@ -60,6 +88,7 @@ public class WordLearnerItem implements Serializable {
         this.rating = rating;
     }
 
+
     public String getNotes() {
         return notes;
     }
@@ -67,6 +96,7 @@ public class WordLearnerItem implements Serializable {
     public void setNotes(String notes) {
         this.notes = notes;
     }
+
 
     public int getWordPosition() {
         return wordPosition;
