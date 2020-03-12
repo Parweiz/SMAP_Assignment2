@@ -1,4 +1,4 @@
-package com.wordlearner2_au522133.smap_assignment2;
+package com.wordlearner2_au522133.smap_assignment2.room;
 
 import android.content.Context;
 

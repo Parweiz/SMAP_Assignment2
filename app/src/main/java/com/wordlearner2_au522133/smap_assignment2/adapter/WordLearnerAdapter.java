@@ -13,6 +13,7 @@ import com.wordlearner2_au522133.smap_assignment2.R;
 import com.wordlearner2_au522133.smap_assignment2.models.WordLearnerParcelable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /*In connection with the implementation of the adapter and the implementation of code for handling clicks in recyclerview,
 so that we can move on to DetailsActivity, inspiration has been taken in the following yt vid:
@@ -22,6 +23,7 @@ https://www.youtube.com/watch?v=WtLZK1kh-yM&feature=emb_logo
 public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.WordViewHolder> {
     private ArrayList<WordLearnerParcelable> mWordList;
     private OnItemListener mOnItemListener;
+    private List<WordLearnerParcelable> mWords;
 
     public void filterList(ArrayList<WordLearnerParcelable> filteredList) {
         mWordList = filteredList;
@@ -92,6 +94,11 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
         void onItemClick(int position);
     }
 
+
+    public void setWords(List<WordLearnerParcelable> words) {
+        mWords = words;
+        notifyDataSetChanged();
+    }
 
     public void updateData(ArrayList<WordLearnerParcelable> newList ){
         mWordList = newList;

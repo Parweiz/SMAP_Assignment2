@@ -3,6 +3,8 @@ package com.wordlearner2_au522133.smap_assignment2.activities;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,6 +17,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -25,12 +28,16 @@ import com.facebook.stetho.Stetho;
 import com.wordlearner2_au522133.smap_assignment2.R;
 import com.wordlearner2_au522133.smap_assignment2.adapter.WordLearnerAdapter;
 import com.wordlearner2_au522133.smap_assignment2.models.WordLearnerParcelable;
+import com.wordlearner2_au522133.smap_assignment2.room.WordViewModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /*As I have already commented in the adapter, I have taken inspiration from the following yt vid to handle clicks
 to retrieve position and then open up DetailsActivity with information about the item / object pressed. Link:
@@ -53,8 +60,10 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
     private int wordClickedIndex, wordPosition, picture;
     private EditText searchTxt;
 
+    private WordViewModel mWordViewModel;
 
-    String API_KEY = "9ea49e1ccb828fd7736d981aa3b027571da9ae86";
+
+    String API_TOKEN = "9ea49e1ccb828fd7736d981aa3b027571da9ae86";
     String server_url = "";
 
     @Override
@@ -90,7 +99,20 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
                 filter(s.toString());
             }
         });
+
+        mWordViewModel = new ViewModelProvider(this).get(WordViewModel.class);
+        mWordViewModel.getAllWords().observe(this, new Observer<List<WordLearnerParcelable>>() {
+            @Override
+            public void onChanged(List<WordLearnerParcelable> wordLearnerParcelables) {
+                mAdapter.setWords(wordLearnerParcelables);
+            }
+        });
+
+
+
     }
+
+
 
     private void filter(String text) {
         ArrayList<WordLearnerParcelable> filteredList = new ArrayList<>();
@@ -204,7 +226,6 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
                     public void onResponse(JSONObject response) {
                         // Process the JSON
                         try {
-
                             JSONArray jsonArray = response.getJSONArray("definitions");
                             // Loop through the array elements
                             for (int i = 0; i < jsonArray.length(); i++) {
@@ -231,8 +252,24 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
                     }
                 }
 
+        ) {
+            @Override
+            public byte[] getBody() {
+                return super.getBody();
+            }
 
-        );
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                // return super.getHeaders();
+
+                Map<String,String> map = new HashMap<>();
+                map.put("Authorization", "Tokens 9ea49e1ccb828fd7736d981aa3b027571da9ae86");
+                return map;
+
+
+            }
+        };
+
         requestQueue.add(jsonObjectRequest);
     }
 

@@ -1,4 +1,4 @@
-package com.wordlearner2_au522133.smap_assignment2;
+package com.wordlearner2_au522133.smap_assignment2.room;
 
 import androidx.lifecycle.LiveData;
 import androidx.room.Delete;
@@ -18,6 +18,10 @@ public interface WordDao {
 
     @Query("SELECT * FROM wordlearner2_word_table")
     LiveData<List<WordLearnerParcelable>> getAllWords();
+
+    @Query("SELECT * from wordlearner2_word_table ORDER BY `Name of the word` ASC")
+    LiveData<List<WordLearnerParcelable>> getAlphabetizedWords();
+
 
     @Query("SELECT * FROM wordlearner2_word_table WHERE uid=:u")
     LiveData<WordLearnerParcelable> getWord(String u);

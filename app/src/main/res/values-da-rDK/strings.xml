@@ -25,4 +25,6 @@
     <string name="delete">Slet</string>
     <string name="update">Opdatere</string>
     <string name="definition">Definition</string>
+    <string name="saved">Ordet er gemt</string>
+    <string name="updated">Ordet er opdateret</string>
 </resources>
