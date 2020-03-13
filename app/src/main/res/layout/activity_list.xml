@@ -48,7 +48,10 @@
         android:background="@color/colorBtn"
         android:text="@string/exit"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        android:onClick="exitBtn"
+
+        />
 
     <Button
         android:id="@+id/addBtn"

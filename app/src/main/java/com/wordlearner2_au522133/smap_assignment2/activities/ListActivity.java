@@ -8,8 +8,12 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -29,6 +33,7 @@ import com.wordlearner2_au522133.smap_assignment2.R;
 import com.wordlearner2_au522133.smap_assignment2.adapter.WordLearnerAdapter;
 import com.wordlearner2_au522133.smap_assignment2.models.WordLearnerParcelable;
 import com.wordlearner2_au522133.smap_assignment2.room.WordViewModel;
+import com.wordlearner2_au522133.smap_assignment2.services.BoundService;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -62,9 +67,11 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
 
     private WordViewModel mWordViewModel;
 
-
     String API_TOKEN = "9ea49e1ccb828fd7736d981aa3b027571da9ae86";
     String server_url = "";
+
+    BoundService mService;
+    boolean mBound = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +86,6 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
         }
 
         enableStethos();
-        setUpExitBtn();
         setUpRecyclerView();
 
         searchTxt = findViewById(R.id.searchTxt);
@@ -100,19 +106,53 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
             }
         });
 
-        mWordViewModel = new ViewModelProvider(this).get(WordViewModel.class);
+    /*    mWordViewModel = new ViewModelProvider(this).get(WordViewModel.class);
         mWordViewModel.getAllWords().observe(this, new Observer<List<WordLearnerParcelable>>() {
             @Override
             public void onChanged(List<WordLearnerParcelable> wordLearnerParcelables) {
                 mAdapter.setWords(wordLearnerParcelables);
             }
-        });
-
-
+        });*/
 
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
 
+        // Bind to LocalService
+        Intent intent = new Intent(this, BoundService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if(mBound) {
+            unbindService(connection);
+            mBound = false;
+        }
+    }
+
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            BoundService.LocalBinder binder = (BoundService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
 
     private void filter(String text) {
         ArrayList<WordLearnerParcelable> filteredList = new ArrayList<>();
@@ -196,16 +236,9 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
         }
     }
 
-    public void setUpExitBtn() {
-        Button exitBtn = (Button) findViewById(R.id.exitBtn);
-
-        exitBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setResult(RESULT_CANCELED);
-                finish();
-            }
-        });
+    public void exitBtn(View v) {
+        setResult(RESULT_CANCELED);
+        finish();
     }
 
     @Override

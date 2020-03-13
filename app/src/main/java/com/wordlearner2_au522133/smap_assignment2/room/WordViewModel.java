@@ -29,8 +29,6 @@ public class WordViewModel extends AndroidViewModel {
         return mWordRepository.getWord(w);
     }
 
-    // public void insert(Word word) { mRepository.insert(word); }
-
     public void addWord(WordLearnerParcelable w) {
         mWordRepository.addWord(w);
     }

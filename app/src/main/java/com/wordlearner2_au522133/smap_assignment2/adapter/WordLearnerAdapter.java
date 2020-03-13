@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -53,6 +54,11 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
         public void onClick(View v) {
             onItemListener.onItemClick(getAdapterPosition());
         }
+
+        public void setWords(ArrayList<WordLearnerParcelable> words) {
+            mWordList = words;
+            notifyDataSetChanged();
+        }
     }
 
     public WordLearnerAdapter(ArrayList<WordLearnerParcelable> wordList, OnItemListener onItemListener) {
@@ -94,13 +100,12 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
         void onItemClick(int position);
     }
 
-
-    public void setWords(List<WordLearnerParcelable> words) {
-        mWords = words;
-        notifyDataSetChanged();
+    public interface OnDeleteClickListener {
+        void OnDeleteClickListener(WordLearnerParcelable myWord);
     }
 
-    public void updateData(ArrayList<WordLearnerParcelable> newList ){
+
+    public void updateData(ArrayList<WordLearnerParcelable> newList) {
         mWordList = newList;
     }
 

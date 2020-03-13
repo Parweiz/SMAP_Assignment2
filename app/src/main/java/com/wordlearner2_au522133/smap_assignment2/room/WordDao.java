@@ -1,6 +1,7 @@
 package com.wordlearner2_au522133.smap_assignment2.room;
 
 import androidx.lifecycle.LiveData;
+import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
@@ -11,6 +12,7 @@ import com.wordlearner2_au522133.smap_assignment2.models.WordLearnerParcelable;
 
 import java.util.List;
 
+@Dao
 public interface WordDao {
 
     @Insert
