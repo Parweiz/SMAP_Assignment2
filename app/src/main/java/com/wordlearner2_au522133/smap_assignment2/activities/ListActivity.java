@@ -33,7 +33,7 @@ import com.wordlearner2_au522133.smap_assignment2.R;
 import com.wordlearner2_au522133.smap_assignment2.adapter.WordLearnerAdapter;
 import com.wordlearner2_au522133.smap_assignment2.models.WordLearnerParcelable;
 import com.wordlearner2_au522133.smap_assignment2.room.WordViewModel;
-import com.wordlearner2_au522133.smap_assignment2.services.BoundService;
+import com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -70,8 +70,10 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
     String API_TOKEN = "9ea49e1ccb828fd7736d981aa3b027571da9ae86";
     String server_url = "";
 
-    BoundService mService;
-    boolean mBound = false;
+    // For bound service
+    private WordLearnerService countingService;
+    private ServiceConnection countingServiceConnection;
+    private boolean mBound = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +108,8 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
             }
         });
 
+        setupConnectionToCountingService();
+
     /*    mWordViewModel = new ViewModelProvider(this).get(WordViewModel.class);
         mWordViewModel.getAllWords().observe(this, new Observer<List<WordLearnerParcelable>>() {
             @Override
@@ -120,39 +124,58 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
     protected void onStart() {
         super.onStart();
 
-        // Bind to LocalService
-        Intent intent = new Intent(this, BoundService.class);
-        bindService(intent, connection, Context.BIND_AUTO_CREATE);
-
+        Intent intent = new Intent(this, WordLearnerService.class);
+        startService(intent);
+        bindService(intent, countingServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
 
+        Intent intent = new Intent(this, WordLearnerService.class);
+
+        stopService(intent);
         if(mBound) {
-            unbindService(connection);
+            unbindService(countingServiceConnection);
             mBound = false;
         }
     }
 
     /** Defines callbacks for service binding, passed to bindService() */
-    private ServiceConnection connection = new ServiceConnection() {
+    private void setupConnectionToCountingService(){
+        countingServiceConnection = new ServiceConnection() {
+            public void onServiceConnected(ComponentName className, IBinder service) {
+                // This is called when the connection with the service has been
+                // established, giving us the service object we can use to
+                // interact with the service.  Because we have bound to a explicit
+                // service that we know is running in our own process, we can
+                // cast its IBinder to a concrete class and directly access it.
+                //ref: http://developer.android.com/reference/android/app/Service.html
 
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            BoundService.LocalBinder binder = (BoundService.LocalBinder) service;
-            mService = binder.getService();
-            mBound = true;
-        }
 
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mBound = false;
-        }
-    };
+
+                // countingService = ((ExampleService.LocalBinder)service).getService();
+
+                WordLearnerService.LocalBinder binder = (WordLearnerService.LocalBinder) service;
+                countingService = binder.getService();
+                mBound = true;
+                Log.d(TAG, "Counting service connected");
+
+            }
+
+            public void onServiceDisconnected(ComponentName className) {
+                // This is called when the connection with the service has been
+                // unexpectedly disconnected -- that is, its process crashed.
+                // Because it is running in our same process, we should never
+                // see this happen.
+                //ref: http://developer.android.com/reference/android/app/Service.html
+                countingService = null;
+                mBound = false;
+                Log.d(TAG, "Counting service disconnected");
+            }
+        };
+    }
 
     private void filter(String text) {
         ArrayList<WordLearnerParcelable> filteredList = new ArrayList<>();

@@ -22,8 +22,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".services.BoundService" />
-        <service android:name=".services.BackgroundService" />
+        <service android:name=".service.WordLearnerService" />
     </application>
 
 </manifest>
