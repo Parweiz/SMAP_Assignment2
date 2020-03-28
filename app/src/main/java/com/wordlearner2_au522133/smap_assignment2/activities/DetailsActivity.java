@@ -1,23 +1,34 @@
 package com.wordlearner2_au522133.smap_assignment2.activities;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.google.gson.Gson;
 import com.wordlearner2_au522133.smap_assignment2.R;
 import com.wordlearner2_au522133.smap_assignment2.adapter.WordLearnerAdapter;
-import com.wordlearner2_au522133.smap_assignment2.models.WordLearnerParcelable;
+import com.wordlearner2_au522133.smap_assignment2.models.Word;
+import com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService;
 
 import java.util.ArrayList;
+
+import static com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService.ARRAY_LIST;
+import static com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService.WORD_OBJECT;
 
 
 /*As I have already commented in the adapter, I have taken inspiration from the following yt vid to handle clicks
@@ -28,43 +39,91 @@ https://www.youtube.com/watch?v=WtLZK1kh-yM&feature=emb_logo
 
 public class DetailsActivity extends AppCompatActivity {
 
-    private ArrayList<WordLearnerParcelable> mWords = new ArrayList<WordLearnerParcelable>();
+    private ArrayList<Word> mWords = new ArrayList<Word>();
     private WordLearnerAdapter mAdapter;
     private Button cancelBtn, editBtn, deleteBtn;
-    private String nameOfTheWord, pronoucing, description, rating, note;
-    private int picture, positionId, wordItemPosition ;
-    private TextView txtName, txtPronouncing, txtDescription, txtNote, txtRating;
-    private ImageView mPicture;
+    private String word, pronunciation, description, rating, note, definition;
+    private int picture, position, wordItemPosition;
+    private Object mPicture;
+    private TextView txtName, txtPronunciation, txtDescription, txtNote, txtRating, txtDefinition;
+    private ImageView imgWord;
     private static final int REQUEST_CODE_EDIT_ACTIVITY = 2;
-
-    private static final String TAG = "smap";
-
-    public DetailsActivity() {
-    }
+    WordLearnerService wordLearnerService;
+    private ServiceConnection boundService;
+    private boolean mBound = false;
+    public static final String TAG = "activity";
+    private Word wordObject;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
 
-        mPicture = findViewById(R.id.mDetailsPicture);
+        imgWord = findViewById(R.id.mDetailsPicture);
         txtName = findViewById(R.id.mDetailsTxtName);
-        txtPronouncing = findViewById(R.id.txtDetailsPronouncing);
-        txtDescription = findViewById(R.id.txtDetailsDescriptionText);
+        txtPronunciation = findViewById(R.id.txtDetailsPronouncing);
+        txtDefinition = findViewById(R.id.txtDetailsDefinitionText);
         txtRating = findViewById(R.id.txtDetailsRating);
         txtNote = findViewById(R.id.txtDetailsNotesText);
 
-        setButtons();
-        gettingDataFromList();
+        setDetailsBtns();
+        boundServiceFunc();
 
-        if (savedInstanceState != null) {
-            mWords = savedInstanceState.getParcelableArrayList(getString(R.string.key_orientationchange));
-            wordItemPosition = savedInstanceState.getInt(getString(R.string.key_position));
-        }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
 
-    public void setButtons() {
+        Intent intent = new Intent(this, WordLearnerService.class);
+        // startService(intent);
+        bindService(intent, boundService, Context.BIND_AUTO_CREATE);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(WordLearnerService.BROADCAST_BACKGROUND_SERVICE_WORD);
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(localBroadcastReceiver, filter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        Intent intent = new Intent(this, WordLearnerService.class);
+
+       //  stopService(intent);
+        if (mBound) {
+            unbindService(boundService);
+            mBound = false;
+        }
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(localBroadcastReceiver);
+    }
+
+    private void boundServiceFunc() {
+        boundService = new ServiceConnection() {
+            public void onServiceConnected(ComponentName className, IBinder service) {
+
+                WordLearnerService.LocalBinder binder = (WordLearnerService.LocalBinder) service;
+                wordLearnerService = binder.getService();
+
+                word = getIntent().getStringExtra(getString(R.string.key_name));
+                wordLearnerService.getWord(word);
+                mBound = true;
+
+                Log.d(TAG, "Boundservice connected - DetailsActivity");
+
+            }
+
+            public void onServiceDisconnected(ComponentName className) {
+                wordLearnerService = null;
+                mBound = false;
+                Log.d(TAG, "Boundservice disconnected - DetailsActivity");
+            }
+        };
+    }
+
+    private void setDetailsBtns() {
         cancelBtn = (Button) findViewById(R.id.cancelDetailsActivityBtn);
         cancelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -86,54 +145,71 @@ public class DetailsActivity extends AppCompatActivity {
         deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int position = wordItemPosition;
-                removeWord(position);
+
+                Log.d(TAG, "Deleting: " + wordObject.getWord());
+                wordLearnerService.deleteWord(wordObject);
                 finish();
+
             }
         });
-
     }
 
+    private BroadcastReceiver localBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            wordObject = (Word) intent.getSerializableExtra(WORD_OBJECT);
+
+            Log.d(TAG, "onReceive: " + wordObject);
+            setDataAfterBroadcast();
 
 
-    public void removeWord(int position) {
-        Toast.makeText(this, "Position" + position, Toast.LENGTH_SHORT).show();
-        mWords.remove(position);
-        mAdapter.notifyItemChanged(position);
-    }
 
-    public void gettingDataFromList() {
-        Intent intent = getIntent();
+        }
+    };
 
-        picture = intent.getIntExtra(getString(R.string.key_picture), 0);
-        nameOfTheWord = intent.getStringExtra(getString(R.string.key_name));
-        pronoucing = intent.getStringExtra(getString(R.string.key_pronouncing));
-        description = intent.getStringExtra(getString(R.string.key_description));
-        rating = intent.getStringExtra(getString(R.string.key_rating));
-        note = intent.getStringExtra(getString(R.string.key_notes));
+    private void setDataAfterBroadcast() {
+        mPicture = wordObject.getDefinitions().get(0).getImageUrl();
+        Log.d(TAG, "setDataAfterBroadcast: " + mPicture);
+        word = wordObject.getWord();
+        pronunciation = wordObject.getPronunciation();
+        definition = wordObject.getDefinitions().get(0).getDefinition();
+        rating = wordObject.getRating();
+        note = wordObject.getNotes();
 
-        positionId = intent.getIntExtra("pos", 0);
-        Log.d(TAG, "gettingDataFromList: " + positionId);
+        if (mPicture != null) {
+            Glide.with(imgWord.getContext()).load(mPicture)
+                    .into(imgWord);
+        } else {
+            Glide.with(imgWord.getContext()).load(R.drawable.coffee_default_image)
+                    .into(imgWord);
+        }
 
-        wordItemPosition = intent.getIntExtra(getString(R.string.key_position), 0);
-        Toast.makeText(this, "Position: " + wordItemPosition, Toast.LENGTH_SHORT).show();
+        txtName.setText(word);
 
-        mWords =  (ArrayList<WordLearnerParcelable>) getIntent().getParcelableExtra("mylist");
+        if (pronunciation != null) {
+            txtPronunciation.setText(pronunciation);
+        } else {
+            txtPronunciation.setText("null");
+        }
 
-        mPicture.setImageResource(picture);
-        txtName.setText(nameOfTheWord);
-        txtPronouncing.setText(pronoucing);
-        txtDescription.setText(description);
-        txtRating.setText(rating);
+        txtDefinition.setText(definition);
+
+        if (rating != null) {
+            txtRating.setText(rating);
+        } else {
+            txtRating.setText("0.0");
+        }
+
         txtNote.setText(note);
     }
 
     public void sendingDataToEditActivity() {
         Intent i = new Intent(this, EditActivity.class);
-        i.putExtra(getString(R.string.key_name), nameOfTheWord);
+        i.putExtra(getString(R.string.key_name), word);
         i.putExtra(getString(R.string.key_rating), rating);
         i.putExtra(getString(R.string.key_notes), note);
-        i.putExtra(getString(R.string.key_position), wordItemPosition);
+        i.putExtra(getString(R.string.key_position), getIntent().getIntExtra(getString(R.string.key_position), 0));
 
         startActivityForResult(i, REQUEST_CODE_EDIT_ACTIVITY);
 
@@ -147,12 +223,6 @@ public class DetailsActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 if (data != null) {
 
-                    note = data.getStringExtra(getString(R.string.key_notes));
-                    rating = data.getStringExtra(getString(R.string.key_rating));
-
-                    txtNote.setText(note);
-                    txtRating.setText(rating);
-
                     setResult(RESULT_OK, data);
                     finish();
                 }
@@ -161,10 +231,5 @@ public class DetailsActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        outState.putParcelableArrayList(getString(R.string.key_orientationchange), mWords);
-        outState.putInt(getString(R.string.key_position), wordItemPosition);
-        super.onSaveInstanceState(outState);
-    }
+
 }

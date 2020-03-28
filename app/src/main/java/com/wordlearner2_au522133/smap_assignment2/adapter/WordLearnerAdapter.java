@@ -1,20 +1,20 @@
 package com.wordlearner2_au522133.smap_assignment2.adapter;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.wordlearner2_au522133.smap_assignment2.R;
-import com.wordlearner2_au522133.smap_assignment2.models.WordLearnerParcelable;
+import com.wordlearner2_au522133.smap_assignment2.models.Word;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /*In connection with the implementation of the adapter and the implementation of code for handling clicks in recyclerview,
 so that we can move on to DetailsActivity, inspiration has been taken in the following yt vid:
@@ -22,28 +22,27 @@ https://www.youtube.com/watch?v=WtLZK1kh-yM&feature=emb_logo
 */
 
 public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.WordViewHolder> {
-    private ArrayList<WordLearnerParcelable> mWordList;
+    private ArrayList<Word> mWordArrayList;
     private OnItemListener mOnItemListener;
-    private List<WordLearnerParcelable> mWords;
+    //private List<Word> mWords;
 
-    public void filterList(ArrayList<WordLearnerParcelable> filteredList) {
-        mWordList = filteredList;
+    public void filterList(ArrayList<Word> filteredList) {
+        mWordArrayList = filteredList;
         notifyDataSetChanged();
     }
 
-
     public class WordViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        ImageView mPicture;
-        TextView txtName, txtPronouncing, txtRating;
+        ImageView imgWord;
+        TextView txtName, txtPronunciation, txtRating;
         OnItemListener onItemListener;
 
         public WordViewHolder(@NonNull View itemView, OnItemListener onItemListener) {
             super(itemView);
 
-            mPicture = itemView.findViewById(R.id.picture);
+            imgWord = itemView.findViewById(R.id.picture);
             txtName = itemView.findViewById(R.id.txtNameOfTheWord);
-            txtPronouncing = itemView.findViewById(R.id.txtPronoucing);
+            txtPronunciation = itemView.findViewById(R.id.txtPronoucing);
             txtRating = itemView.findViewById(R.id.txtListRating);
             this.onItemListener = onItemListener;
 
@@ -55,14 +54,18 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
             onItemListener.onItemClick(getAdapterPosition());
         }
 
-        public void setWords(ArrayList<WordLearnerParcelable> words) {
-            mWordList = words;
+        public void setWords(ArrayList<Word> words) {
+            mWordArrayList = words;
             notifyDataSetChanged();
         }
     }
 
-    public WordLearnerAdapter(ArrayList<WordLearnerParcelable> wordList, OnItemListener onItemListener) {
-        this.mWordList = wordList;
+    public Word getWordAtPosition(int position) {
+        return mWordArrayList.get(position);
+    }
+
+    public WordLearnerAdapter(ArrayList<Word> wordList, Context c, OnItemListener onItemListener) {
+        this.mWordArrayList = wordList;
         this.mOnItemListener = onItemListener;
     }
 
@@ -76,24 +79,46 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull WordViewHolder holder, int position) {
-        WordLearnerParcelable word = mWordList.get(position);
 
-        int image = word.getImageResource();
-        String name = word.getWord();
-        String pronounce = word.getPronouncing();
-        String rating = word.getRating();
 
-        holder.mPicture.setImageResource(image);
-        holder.txtName.setText(name);
-        holder.txtPronouncing.setText(pronounce);
-        holder.txtRating.setText(rating);
+        Object mPicture = mWordArrayList.get(position)
+                .getDefinitions()
+                .get(0)
+                .getImageUrl();
 
+        if (mPicture != null) {
+            Glide.with(holder.imgWord.getContext()).load(mPicture)
+                    .into(holder.imgWord);
+        } else {
+            Glide.with(holder.imgWord.getContext()).load(R.drawable.coffee_default_image)
+                    .into(holder.imgWord);
+        }
+
+        holder.txtName.setText(mWordArrayList.get(position).getWord());
+
+        String pronounciation = mWordArrayList.get(position).getPronunciation();
+        if (pronounciation != null) {
+            holder.txtPronunciation.setText(pronounciation);
+        } else {
+            holder.txtPronunciation.setText("null");
+        }
+
+
+
+        String rating = mWordArrayList.get(position).getRating();
+        if (rating != null) {
+            holder.txtRating.setText(rating);
+        } else {
+            holder.txtRating.setText("0.0");
+        }
 
     }
 
     @Override
     public int getItemCount() {
-        return mWordList.size();
+        if (mWordArrayList != null) {
+            return mWordArrayList.size();
+        } else return 0;
     }
 
     public interface OnItemListener {
@@ -101,12 +126,12 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
     }
 
     public interface OnDeleteClickListener {
-        void OnDeleteClickListener(WordLearnerParcelable myWord);
+        void OnDeleteClickListener(Word myWord);
     }
 
 
-    public void updateData(ArrayList<WordLearnerParcelable> newList) {
-        mWordList = newList;
+    public void updateData(ArrayList<Word> newList) {
+        mWordArrayList = newList;
     }
 
 }

@@ -34,7 +34,7 @@
         android:layout_below="@+id/txtNameOfTheWord"
         android:layout_toEndOf="@+id/picture"
         android:padding="10dp"
-        android:text="@string/pronoucing"
+        android:text="@string/pronunciation"
         android:textSize="15sp" />
 
     <TextView

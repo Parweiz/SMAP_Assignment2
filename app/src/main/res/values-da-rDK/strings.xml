@@ -2,8 +2,7 @@
 <resources>
     <string name="app_name">au522133 Word Learner 2</string>
     <string name="name_of_the_word">Navnet på ordet</string>
-    <string name="pronoucing">Udtalelse</string>
-    <string name="pronouncing">Udtalelse</string>
+
     <string name="description">"Beskrivelse: "</string>
     <string name="cancel">Annulerer</string>
     <string name="ok">OK</string>
@@ -27,4 +26,5 @@
     <string name="definition">Definition</string>
     <string name="saved">Ordet er gemt</string>
     <string name="updated">Ordet er opdateret</string>
+    <string name="pronunciation">Udtalelse</string>
 </resources>

@@ -7,14 +7,21 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.room.Room;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -23,40 +30,60 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.wordlearner2_au522133.smap_assignment2.R;
+import com.wordlearner2_au522133.smap_assignment2.models.Word;
+import com.wordlearner2_au522133.smap_assignment2.room.WordRoomDatabase;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import static android.content.ContentValues.TAG;
+/*
+In connection with implementing methods in WordDao, I have taken inspiration from the following yt vid:
+https://www.youtube.com/watch?v=EguY40n84Xo
+
+Besides that, I've also taken inspiration from the following demo and links to figure out how to bind to a service,
+how to start a foreground service, how to send a local broadcast and how to retrieve it:
+- ServiceDemo app from L5
+- https://developer.android.com/guide/components/bound-services
+- https://www.youtube.com/watch?v=FbpD5RZtbCc&t=27s
+
+In addition, I've also taken inspiration from RickandMortyGallary demo (L6) to figure out how to connect properly with Volley.
+Additionaly, I've taken inspiration from https://stackoverflow.com/questions/17049473/how-to-set-custom-header-in-volley-request
+to figure out how to set header for volley request.
+
+* */
+
+
 
 public class WordLearnerService extends Service {
 
-    // Binder given to clients - This is the object that receives interactions from clients.
     private final IBinder binder = new LocalBinder();
-
+    public static final String BROADCAST_BACKGROUND_SERVICE_ARRAYLIST = "com.wordlearner2_au522133.smap_assignment2.BROADCAST_BACKGROUND_SERVICE_ARRAYLIST";
+    public static final String BROADCAST_BACKGROUND_SERVICE_WORD = "com.wordlearner2_au522133.smap_assignment2.BROADCAST_BACKGROUND_SERVICE_WORD";
+    public static final String ARRAY_LIST = "arraylist";
+    public static final String WORD_OBJECT = "word";
+    public static final String TAG = "main";
+    private ArrayList<Word> mWordArrayList = new ArrayList<Word>();
     private boolean runAsForegroundService = true;
-
-
     public static final String CHANNEL_ID = "exampleServiceChannel";
     public static final String LOG = "service";
-
-    // For web api
-    String server_url = "https://owlbot.info/api/v4/dictionary/owl";
+    private WordRoomDatabase wordRoomDatabase;
+    private RequestQueue queue;
     final String API_TOKEN = "9ea49e1ccb828fd7736d981aa3b027571da9ae86";
+    private Word word;
+    private NotificationManagerCompat notificationManagerCompat;
+    private Handler mHandler = new Handler();
+    private Random random = new Random();
 
-    /**
-     * Class used for the client Binder.  Because we know this service always
-     * runs in the same process as its clients, we don't need to deal with IPC.
-     */
     public class LocalBinder extends Binder {
         public WordLearnerService getService() {
-            // Return this instance of LocalService so clients can call public methods
             return WordLearnerService.this;
         }
     }
@@ -64,12 +91,11 @@ public class WordLearnerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
+        notificationManagerCompat = NotificationManagerCompat.from(this);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String input = intent.getStringExtra("inputExtra");
 
         if (runAsForegroundService) {
 
@@ -77,7 +103,7 @@ public class WordLearnerService extends Service {
                 NotificationChannel serviceChannel = new NotificationChannel(
                         CHANNEL_ID,
                         "WordLearnerService Channel",
-                        NotificationManager.IMPORTANCE_DEFAULT
+                        NotificationManager.IMPORTANCE_HIGH
                 );
 
                 NotificationManager notificationManager = getSystemService(NotificationManager.class);
@@ -89,21 +115,30 @@ public class WordLearnerService extends Service {
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
             Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_announcement_black_24dp)
                     .setContentTitle("WordLearnerService")
-                    .setContentText(input)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentText("Word: null")
                     .setContentIntent(pendingIntent)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                     .build();
 
-            startForeground(1, notification);
+            mToastRunnable.run();
+
+
+            // startForeground(1, notification);
+            notificationManagerCompat.notify(1, notification);
+
         } else {
             Log.d(LOG, "Background service onStartCommand - already started!");
         }
 
-        // Tell the user we started.
-        Toast.makeText(this, "WordLearnerService started", Toast.LENGTH_LONG).show();
+        wordRoomDatabase = Room.databaseBuilder(
+                getApplicationContext(),
+                WordRoomDatabase.class,
+                "WordDB")
+                .build();
 
-        httpRequestWithVolley();
 
         return START_STICKY;
     }
@@ -117,66 +152,243 @@ public class WordLearnerService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-        // Tell the user we stopped.
-        Toast.makeText(this, "WordLearnerService stopped", Toast.LENGTH_SHORT).show();
     }
 
-    private void httpRequestWithVolley() {
-        // Initialize a new RequestQueue instance
-        final RequestQueue requestQueue = Volley.newRequestQueue(this);
+    private void sendRequestWithVolley(String url) {
+        if (queue == null) {
+            queue = Volley.newRequestQueue(this);
+        }
 
-        // Initialize a new JsonArrayRequest instance
-        final JsonObjectRequest jsonArrayRequest = new JsonObjectRequest(
+        final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.GET,
-                server_url,
+                url,
                 null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        // Process the JSON
-                        try {
-                            // Display the data (json object) in json object
-                            String json = response.toString();
-                            Log.d(LOG, "onResponse: " + response);
-                            JSONArray jsonArray = response.getJSONArray("definitions");
-
-                            // Loop through the array elements
-                            for (int i = 0; i < jsonArray.length(); i++) {
-                                JSONObject jsonObject = jsonArray.getJSONObject(i);
-                                String definition = jsonObject.getString("definition");
-                                String image = jsonObject.getString("image_url");
-                            }
-
-                            String word = response.getString("word");
-                            String pronunciation = response.getString("pronunciation");
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+                        Log.d(TAG, "onResponse: " + response);
+                        parseJson(response.toString());
                     }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // Do something when error occurred
-                        error.printStackTrace();
-                    }
-                }
-        ) {
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
+                Log.e(TAG, "That did not work!", error);
+            }
+        }) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                //  return super.getHeaders();
-
                 Map<String, String> map = new HashMap<>();
                 map.put("Authorization", "Token " + API_TOKEN);
                 return map;
             }
         };
 
-        // Add JsonArrayRequest to the RequestQueue
-        requestQueue.add(jsonArrayRequest);
-
+        queue.add(jsonObjectRequest);
 
     }
 
+    private void parseJson(String json) {
+        Gson gson = new GsonBuilder().create();
+        Word word = gson.fromJson(json, Word.class);
+        if (word != null) {
+            mWordArrayList.add(0, word);
+            word.getDefinitions().get(0).getImageUrl();
+
+            new CreateWordsAsyncTask().execute(word);
+        }
+    }
+
+    public void addWord(String word) {
+        String server_url = "https://owlbot.info/api/v4/dictionary/";
+        sendRequestWithVolley(server_url + word);
+    }
+
+    public void getAllWords() {
+        new GetAllWordsAsyncTask().execute();
+    }
+
+    public void getWord(String nameoftheword) {
+         new GetWordAsyncTask().execute(nameoftheword);
+    }
+
+    public void updateWord(String rating, String notes, int position) {
+        Word word = mWordArrayList.get(position);
+        word.setRating(rating);
+        word.setNotes(notes);
+
+        new UpdateWordAsyncTask().execute(word);
+
+        mWordArrayList.set(position, word);
+    }
+
+    public void deleteWord(Word word) {
+        new DeleteWordAsyncTask().execute(word);
+    }
+
+    public void deleteAllWords() {
+        new DeleteAllWordsAsyncTask().execute();
+    }
+
+    public class GetAllWordsAsyncTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            mWordArrayList.clear();
+            mWordArrayList.addAll(wordRoomDatabase.wordDao().getAllWords());
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            localBroadcastSender(mWordArrayList);
+        }
+    }
+
+    public class GetWordAsyncTask extends AsyncTask<String, Void, Word> {
+
+        @Override
+        protected Word doInBackground(String... strings) {
+            Word word = wordRoomDatabase.wordDao().getWord(strings[0]);
+            return word;
+        }
+
+        @Override
+        protected void onPostExecute(Word word) {
+            super.onPostExecute(word);
+            localBroadcastWordObjectSender(word);
+
+        }
+    }
+
+    public class CreateWordsAsyncTask extends AsyncTask<Word, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Word... words) {
+
+            for (Word word : words) {
+                wordRoomDatabase.wordDao().addWord(word);
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            localBroadcastSender(mWordArrayList);
+        }
+    }
+
+    public class UpdateWordAsyncTask extends AsyncTask<Word, Void, Void> {
+        @Override
+        protected Void doInBackground(Word... words) {
+
+            wordRoomDatabase.wordDao().updateWord(words[0]);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            localBroadcastSender(mWordArrayList);
+        }
+    }
+
+    public class DeleteWordAsyncTask extends AsyncTask<Word, Void, Void> {
+        @Override
+        protected Void doInBackground(Word... words) {
+
+            wordRoomDatabase.wordDao().deleteWord(words[0]);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            localBroadcastSender(mWordArrayList);
+        }
+    }
+
+    public class DeleteAllWordsAsyncTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            wordRoomDatabase.wordDao().deleteAll();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            localBroadcastSender(mWordArrayList);
+        }
+    }
+
+    private void localBroadcastSender(ArrayList<Word> words) {
+        Intent intent = new Intent();
+        Bundle bundle = new Bundle();
+
+        intent.setAction(BROADCAST_BACKGROUND_SERVICE_ARRAYLIST);
+        bundle.putSerializable(ARRAY_LIST, (Serializable) mWordArrayList);
+        intent.putExtra("Bundle", bundle);
+        Log.d(TAG, "localBroadcastSender: " + words);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    private void localBroadcastWordObjectSender(Word word) {
+        Intent intent = new Intent();
+        intent.setAction(BROADCAST_BACKGROUND_SERVICE_WORD);
+        intent.putExtra(WORD_OBJECT, word);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+
+    /*This function delays and repeat code execution using Handler PostDelayed.
+    Inspiration: https://www.youtube.com/watch?v=3pgGVBmSVq0  */
+    private Runnable mToastRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mHandler.postDelayed(this, 60000);
+            Log.d(TAG, "PostDelayed test");
+
+           /*  I know that it's not a proper loop, due to statement 2, but the app didn't really allow me to write 1,
+             or even another numbers, so I just found out another way to tell the app that it should only get one random word.
+             Inspiration: https://www.youtube.com/watch?v=OhStCBiiOMo
+             */
+            for(int i = 0; i < mWordArrayList.size()-5; i++) {
+                getRandomWord(mWordArrayList);
+            }
+        }
+    };
+
+    private void getRandomWord(ArrayList<Word> words) {
+        int index = random.nextInt(mWordArrayList.size());
+        Log.d(TAG, "index: " + index + ", word: " + words.get(index).getWord());
+
+        Intent notificationIntent = new Intent(this, ListActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_announcement_black_24dp)
+                .setContentTitle("Word: " + words.get(index).getWord())
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText("Eyyyy you. Even though we're in quarantine, it doesn't mean that you can just " +
+                                "chill. For this reason, I'd like to remind you to keep working hard and keep learning, as it will " +
+                                "benefit you in the end! In the case, you can start off or keep practicing this word: " + words.get(index).getWord()))
+                .setContentIntent(pendingIntent)
+               /* .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setDefaults(Notification.DEFAULT_VIBRATE)*/
+                .build();
+
+        // startForeground(1, notification);
+        notificationManagerCompat.notify(1, notification);
+    }
 }
+

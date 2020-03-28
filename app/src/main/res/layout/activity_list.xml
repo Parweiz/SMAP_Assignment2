@@ -29,7 +29,6 @@
         android:layout_width="393dp"
         android:layout_height="396dp"
         android:layout_marginTop="80dp"
-        android:background="@color/colorBtn"
         android:padding="4dp"
         android:scrollbars="vertical"
         app:layout_constraintEnd_toEndOf="parent"
@@ -65,7 +64,9 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.881"
-        app:layout_constraintStart_toEndOf="@+id/exitBtn" />
+        app:layout_constraintStart_toEndOf="@+id/exitBtn"
+        android:onClick="addBtn"
+        />
 
     <EditText
         android:id="@+id/searchTxt"

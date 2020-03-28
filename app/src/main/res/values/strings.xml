@@ -1,8 +1,7 @@
 <resources>
     <string name="app_name">au522133 Word Learner 2</string>
     <string name="name_of_the_word">Name of the word</string>
-    <string name="pronoucing">Pronouncement</string>
-    <string name="pronouncing">Pronouncement</string>
+    <string name="pronunciation">Pronunciation</string>
     <string name="description">Description: </string>
     <string name="cancel">CANCEL</string>
     <string name="ok">OK</string>
@@ -21,9 +20,9 @@
     <string name="defaultRating">0.0</string>
     <string name="user_s_notes">User\'s notes</string>
     <string name="key_picture" translatable="false">picture</string>
-    <string name="key_name" translatable="false">name</string>
-    <string name="key_pronouncing" translatable="false">pronouncing</string>
-    <string name="key_description" translatable="false">description</string>
+    <string name="key_name" translatable="false">word</string>
+    <string name="key_pronouncing" translatable="false">pronunciation</string>
+    <string name="key_definition" translatable="false">definition</string>
     <string name="key_rating" translatable="false">rating</string>
     <string name="key_notes" translatable="false">notes</string>
     <string name="key_wordlist" translatable="false">wordItem</string>
@@ -38,5 +37,6 @@
     <string name="definition">Definition</string>
     <string name="saved">Word saved</string>
     <string name="updated">Word Updated</string>
+    <string name="clear_all_data">Clear All Data</string>
 
 </resources>

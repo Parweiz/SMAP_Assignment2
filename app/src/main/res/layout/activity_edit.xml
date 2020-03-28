@@ -28,13 +28,14 @@
         android:layout_marginStart="44dp"
         android:layout_marginBottom="48dp"
         android:text="@string/cancel"
-        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:background="@color/colorBtn" />
+        android:background="@color/colorBtn"
+
+        />
 
     <Button
-        android:id="@+id/editEditActivityBtn"
+        android:id="@+id/updateEditActivityBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="48dp"
@@ -44,7 +45,7 @@
         app:layout_constraintHorizontal_bias="0.79"
         app:layout_constraintStart_toEndOf="@+id/cancelEditActivityBtn"
         android:background="@color/colorBtn"
-        android:textStyle="bold" />
+        />
 
     <TextView
         android:id="@+id/txtEditViewWordRating"
@@ -103,7 +104,7 @@
         android:ems="10"
         android:hint="@string/write_notes_here"
         android:inputType="textMultiLine"
-        app:layout_constraintBottom_toTopOf="@+id/editEditActivityBtn"
+        app:layout_constraintBottom_toTopOf="@+id/updateEditActivityBtn"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.297"
         app:layout_constraintStart_toStartOf="parent" />

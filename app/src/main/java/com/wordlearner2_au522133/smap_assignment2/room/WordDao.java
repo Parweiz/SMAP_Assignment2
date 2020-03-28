@@ -8,29 +8,38 @@ import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Update;
 
-import com.wordlearner2_au522133.smap_assignment2.models.WordLearnerParcelable;
+import com.wordlearner2_au522133.smap_assignment2.models.Word;
 
 import java.util.List;
 
 @Dao
 public interface WordDao {
 
-    @Insert
-    void addWord(WordLearnerParcelable w);
+    @Query("SELECT * FROM assignment2_au522133_wordtable ORDER BY word ASC")
+    public List<Word> getAllWords();
 
-    @Query("SELECT * FROM wordlearner2_word_table")
-    LiveData<List<WordLearnerParcelable>> getAllWords();
+    @Query("SELECT * FROM assignment2_au522133_wordtable WHERE word=:word")
+    public Word getWord(String word);
 
-    @Query("SELECT * from wordlearner2_word_table ORDER BY `Name of the word` ASC")
-    LiveData<List<WordLearnerParcelable>> getAlphabetizedWords();
-
-
-    @Query("SELECT * FROM wordlearner2_word_table WHERE uid=:u")
-    LiveData<WordLearnerParcelable> getWord(String u);
+    /*
+    I have not found a "real" solution for how to avoid inserting duplicate data.
+    However, I have implemented a temporary solution to ensure that the application does not crash
+    when trying to enter with duplicate data using (onConflict = OnConflictStrategy.IGNORE).
+    Yes, the word will appear in the recycleview, but it will not be stored in the database.
+    */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    public void addWord(Word word);
 
     @Update
-    void updateWord(WordLearnerParcelable w);
+    public void updateWord(Word word);
 
     @Delete
-    void deleteWord(WordLearnerParcelable w);
+    public void deleteWord(Word word);
+
+    @Query("DELETE FROM assignment2_au522133_wordtable")
+    public void deleteAll();
+
+
+
+
 }

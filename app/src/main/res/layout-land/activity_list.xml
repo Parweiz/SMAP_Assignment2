@@ -13,7 +13,6 @@
         android:layout_height="322dp"
         android:layout_marginStart="12dp"
         android:padding="4dp"
-        android:background="@color/colorBtn"
         android:scrollbars="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -32,10 +31,12 @@
         android:text="@string/my_words"
         android:textSize="30sp"
         android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/searchTxt"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.504"
+        app:layout_constraintHorizontal_bias="0.45"
         app:layout_constraintStart_toEndOf="@+id/recyclerView"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.161" />
 
     <Button
         android:id="@+id/exitBtn"
@@ -50,7 +51,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.494"
         app:layout_constraintStart_toEndOf="@+id/recyclerView"
-
+        android:onClick="exitBtn"
         app:layout_constraintTop_toBottomOf="@+id/txtMainHeading"
         app:layout_constraintVertical_bias="0.929" />
 
@@ -65,23 +66,21 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.494"
         app:layout_constraintStart_toEndOf="@+id/recyclerView"
-
+        android:onClick="addBtn"
         />
 
     <EditText
         android:id="@+id/searchTxt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="52dp"
+        android:layout_marginBottom="216dp"
         android:ems="10"
         android:hint="Search and add"
         android:inputType="textPersonName"
-        app:layout_constraintBottom_toTopOf="@+id/button"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.464"
-        app:layout_constraintStart_toEndOf="@+id/recyclerView"
-        app:layout_constraintTop_toBottomOf="@+id/txtMainHeading"
-        app:layout_constraintVertical_bias="0.942" />
+        app:layout_constraintHorizontal_bias="0.417"
+        app:layout_constraintStart_toEndOf="@+id/recyclerView" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
