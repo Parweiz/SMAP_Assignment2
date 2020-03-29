@@ -364,6 +364,8 @@ public class WordLearnerService extends Service {
     private Runnable mToastRunnable = new Runnable() {
         @Override
         public void run() {
+            // Comments to the video around 1:23-1:30: It's supposed to delay and execute it every min, but some reason
+            // it should goes from lion to dog and in a few secounds and I don't really get why it does that.
             mHandler.postDelayed(this, 60000);
             Log.d(TAG, "PostDelayed test");
 

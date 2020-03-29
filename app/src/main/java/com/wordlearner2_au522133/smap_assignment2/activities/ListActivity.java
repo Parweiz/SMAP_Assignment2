@@ -122,6 +122,22 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
         return super.onOptionsItemSelected(item);
     }
 
+    private void initialData() {
+
+        String lion = "lion";
+        String football = "football";
+        String school = "school";
+        String tiger = "tiger";
+        String dog = "dog";
+        String cat = "cat";
+        wordLearnerService.addWord(lion);
+        wordLearnerService.addWord(football);
+        wordLearnerService.addWord(school);
+        wordLearnerService.addWord(tiger);
+        wordLearnerService.addWord(dog);
+        wordLearnerService.addWord(cat);
+    }
+
     public void setUpRecyclerView() {
         mRecyclerView = findViewById(R.id.recyclerView);
         mRecyclerView.setHasFixedSize(true);
@@ -150,6 +166,11 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
 
                 WordLearnerService.LocalBinder binder = (WordLearnerService.LocalBinder) service;
                 wordLearnerService = binder.getService();
+
+                if (mWords.size() == 0) {
+                    initialData();
+
+                }
 
                 wordLearnerService.getAllWords();
 

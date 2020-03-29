@@ -44,7 +44,6 @@ For that reason, I've decided to let it be for now and fix it after peer review.
 
 public class DetailsActivity extends AppCompatActivity {
 
-
     private Button cancelBtn, editBtn, deleteBtn;
     private String word, pronunciation, rating, note, definition;
     private Object mPicture;
