@@ -22,14 +22,12 @@ public class EditActivity extends AppCompatActivity {
 
     private Button cancelBtn, updateBtn;
     private SeekBar seekbar;
-    private TextView wordRating, txtRating, notes, txtName;
+    private TextView wordRating, txtRating, txtName;
     private EditText txtNote;
     private String ratingInput, txtProgress, word, notesInput, rating, note;
     private float value;
     private int valueFromSeekbar, wordPosition;
     public static final String TAG = "service";
-
-    // For bound service
     WordLearnerService wordLearnerService = new WordLearnerService();
     private ServiceConnection boundService;
     private boolean mBound = false;
@@ -39,11 +37,9 @@ public class EditActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
 
-        wordRating = (TextView) findViewById(R.id.txtEditViewWordRating);
-        notes = (TextView) findViewById(R.id.txtEditNotes);
         txtName = findViewById(R.id.txtEditNameOfTheWord);
-        txtNote = (EditText) findViewById(R.id.edittextEditNotesText);
-        txtRating = (TextView) findViewById(R.id.txtEditRating);
+        txtNote =  findViewById(R.id.edittextEditNotesText);
+        txtRating = findViewById(R.id.txtEditRating);
 
         setSeekbar();
         gettingDataFromDetails();
@@ -56,7 +52,6 @@ public class EditActivity extends AppCompatActivity {
         super.onStart();
 
         Intent intent = new Intent(this, WordLearnerService.class);
-        // startService(intent);
         bindService(intent, boundService, Context.BIND_AUTO_CREATE);
     }
 
@@ -64,9 +59,6 @@ public class EditActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
-        Intent intent = new Intent(this, WordLearnerService.class);
-
-        // stopService(intent);
         if (mBound) {
             unbindService(boundService);
             mBound = false;
@@ -81,20 +73,20 @@ public class EditActivity extends AppCompatActivity {
                 wordLearnerService = binder.getService();
 
                 mBound = true;
-                Log.d(TAG, "Boundservice connected - DetailsActivity");
+                Log.d(TAG, "Boundservice connected - EditActivity");
 
             }
 
             public void onServiceDisconnected(ComponentName className) {
                 wordLearnerService = null;
                 mBound = false;
-                Log.d(TAG, "Boundservice disconnected - DetailsActivity");
+                Log.d(TAG, "Boundservice disconnected - EditActivity");
             }
         };
     }
 
     private void setSeekbar() {
-        seekbar = (SeekBar) findViewById(R.id.seekBarEdit);
+        seekbar = findViewById(R.id.seekBarEdit);
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -163,7 +155,5 @@ public class EditActivity extends AppCompatActivity {
             int seekbarProgress = (int) seekbarValue;
             seekbar.setProgress(seekbarProgress);
         }
-
     }
-
 }

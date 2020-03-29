@@ -27,4 +27,5 @@
     <string name="saved">Ordet er gemt</string>
     <string name="updated">Ordet er opdateret</string>
     <string name="pronunciation">Udtalelse</string>
+    <string name="clear_all_data">Slet alle dataer</string>
 </resources>

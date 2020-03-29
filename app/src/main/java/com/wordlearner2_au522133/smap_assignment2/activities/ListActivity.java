@@ -111,7 +111,6 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
         // Look at comments above the class to understand why I have chosen to implement code to delete all words
-
         int id = item.getItemId();
 
         if (id == R.id.clear_all_data) {

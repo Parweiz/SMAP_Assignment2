@@ -24,12 +24,6 @@ https://www.youtube.com/watch?v=WtLZK1kh-yM&feature=emb_logo
 public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.WordViewHolder> {
     private ArrayList<Word> mWordArrayList;
     private OnItemListener mOnItemListener;
-    //private List<Word> mWords;
-
-    public void filterList(ArrayList<Word> filteredList) {
-        mWordArrayList = filteredList;
-        notifyDataSetChanged();
-    }
 
     public class WordViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
@@ -54,14 +48,6 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
             onItemListener.onItemClick(getAdapterPosition());
         }
 
-        public void setWords(ArrayList<Word> words) {
-            mWordArrayList = words;
-            notifyDataSetChanged();
-        }
-    }
-
-    public Word getWordAtPosition(int position) {
-        return mWordArrayList.get(position);
     }
 
     public WordLearnerAdapter(ArrayList<Word> wordList, Context c, OnItemListener onItemListener) {
@@ -104,7 +90,6 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
         }
 
 
-
         String rating = mWordArrayList.get(position).getRating();
         if (rating != null) {
             holder.txtRating.setText(rating);
@@ -124,11 +109,6 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
     public interface OnItemListener {
         void onItemClick(int position);
     }
-
-    public interface OnDeleteClickListener {
-        void OnDeleteClickListener(Word myWord);
-    }
-
 
     public void updateData(ArrayList<Word> newList) {
         mWordArrayList = newList;

@@ -34,7 +34,7 @@
     <string name="add">ADD</string>
     <string name="delete">Delete</string>
     <string name="update">Update</string>
-    <string name="definition">Definition</string>
+    <string name="definition">Definition: </string>
     <string name="saved">Word saved</string>
     <string name="updated">Word Updated</string>
     <string name="clear_all_data">Clear All Data</string>

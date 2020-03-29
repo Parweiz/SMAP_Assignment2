@@ -25,7 +25,7 @@ public interface WordDao {
     I have not found a "real" solution for how to avoid inserting duplicate data.
     However, I have implemented a temporary solution to ensure that the application does not crash
     when trying to enter with duplicate data using (onConflict = OnConflictStrategy.IGNORE).
-    Yes, the word will appear in the recycleview, but it will not be stored in the database.
+    Yes, the word will though appear in the recycleview, but it will not be stored in the database, and that's the most important thing
     */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     public void addWord(Word word);

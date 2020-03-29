@@ -1,5 +1,6 @@
 package com.wordlearner2_au522133.smap_assignment2.activities;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -25,6 +26,7 @@ import com.wordlearner2_au522133.smap_assignment2.adapter.WordLearnerAdapter;
 import com.wordlearner2_au522133.smap_assignment2.models.Word;
 import com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import static com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService.ARRAY_LIST;
@@ -35,17 +37,18 @@ import static com.wordlearner2_au522133.smap_assignment2.service.WordLearnerServ
 to retrieve position and then open up DetailsActivity with information about the item / object pressed. Link:
 https://www.youtube.com/watch?v=WtLZK1kh-yM&feature=emb_logo
 
+Sadly, the app crashes when you switch to landscape mode meanwhile you're at DetailsActivity.
+It returns with a NullPointerException, and I can't really figure out how to fix it.
+For that reason, I've decided to let it be for now and fix it after peer review.
 */
 
 public class DetailsActivity extends AppCompatActivity {
 
-    private ArrayList<Word> mWords = new ArrayList<Word>();
-    private WordLearnerAdapter mAdapter;
+
     private Button cancelBtn, editBtn, deleteBtn;
-    private String word, pronunciation, description, rating, note, definition;
-    private int picture, position, wordItemPosition;
+    private String word, pronunciation, rating, note, definition;
     private Object mPicture;
-    private TextView txtName, txtPronunciation, txtDescription, txtNote, txtRating, txtDefinition;
+    private TextView txtName, txtPronunciation, txtNote, txtRating, txtDefinition;
     private ImageView imgWord;
     private static final int REQUEST_CODE_EDIT_ACTIVITY = 2;
     WordLearnerService wordLearnerService;
@@ -68,7 +71,6 @@ public class DetailsActivity extends AppCompatActivity {
 
         setDetailsBtns();
         boundServiceFunc();
-
     }
 
     @Override
@@ -76,7 +78,6 @@ public class DetailsActivity extends AppCompatActivity {
         super.onStart();
 
         Intent intent = new Intent(this, WordLearnerService.class);
-        // startService(intent);
         bindService(intent, boundService, Context.BIND_AUTO_CREATE);
 
         IntentFilter filter = new IntentFilter();
@@ -89,9 +90,6 @@ public class DetailsActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
-        Intent intent = new Intent(this, WordLearnerService.class);
-
-       //  stopService(intent);
         if (mBound) {
             unbindService(boundService);
             mBound = false;
@@ -103,14 +101,13 @@ public class DetailsActivity extends AppCompatActivity {
     private void boundServiceFunc() {
         boundService = new ServiceConnection() {
             public void onServiceConnected(ComponentName className, IBinder service) {
-
                 WordLearnerService.LocalBinder binder = (WordLearnerService.LocalBinder) service;
                 wordLearnerService = binder.getService();
 
                 word = getIntent().getStringExtra(getString(R.string.key_name));
                 wordLearnerService.getWord(word);
-                mBound = true;
 
+                mBound = true;
                 Log.d(TAG, "Boundservice connected - DetailsActivity");
 
             }
@@ -145,11 +142,9 @@ public class DetailsActivity extends AppCompatActivity {
         deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 Log.d(TAG, "Deleting: " + wordObject.getWord());
                 wordLearnerService.deleteWord(wordObject);
                 finish();
-
             }
         });
     }
@@ -157,14 +152,9 @@ public class DetailsActivity extends AppCompatActivity {
     private BroadcastReceiver localBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-
             wordObject = (Word) intent.getSerializableExtra(WORD_OBJECT);
-
             Log.d(TAG, "onReceive: " + wordObject);
             setDataAfterBroadcast();
-
-
-
         }
     };
 
@@ -226,10 +216,7 @@ public class DetailsActivity extends AppCompatActivity {
                     setResult(RESULT_OK, data);
                     finish();
                 }
-
             }
         }
     }
-
-
 }

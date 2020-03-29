@@ -17,11 +17,15 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.room.DatabaseConfiguration;
+import androidx.room.InvalidationTracker;
 import androidx.room.Room;
+import androidx.sqlite.db.SupportSQLiteOpenHelper;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -34,6 +38,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.wordlearner2_au522133.smap_assignment2.R;
 import com.wordlearner2_au522133.smap_assignment2.models.Word;
+import com.wordlearner2_au522133.smap_assignment2.room.WordDao;
 import com.wordlearner2_au522133.smap_assignment2.room.WordRoomDatabase;
 
 import org.json.JSONObject;
@@ -55,11 +60,10 @@ how to start a foreground service, how to send a local broadcast and how to retr
 - https://www.youtube.com/watch?v=FbpD5RZtbCc&t=27s
 
 In addition, I've also taken inspiration from RickandMortyGallary demo (L6) to figure out how to connect properly with Volley.
-Additionaly, I've taken inspiration from https://stackoverflow.com/questions/17049473/how-to-set-custom-header-in-volley-request
+Additionaly, I've also taken inspiration from https://stackoverflow.com/questions/17049473/how-to-set-custom-header-in-volley-request
 to figure out how to set header for volley request.
 
 * */
-
 
 
 public class WordLearnerService extends Service {
@@ -73,14 +77,13 @@ public class WordLearnerService extends Service {
     private ArrayList<Word> mWordArrayList = new ArrayList<Word>();
     private boolean runAsForegroundService = true;
     public static final String CHANNEL_ID = "exampleServiceChannel";
-    public static final String LOG = "service";
     private WordRoomDatabase wordRoomDatabase;
     private RequestQueue queue;
     final String API_TOKEN = "9ea49e1ccb828fd7736d981aa3b027571da9ae86";
-    private Word word;
     private NotificationManagerCompat notificationManagerCompat;
     private Handler mHandler = new Handler();
     private Random random = new Random();
+    private boolean started = true;
 
     public class LocalBinder extends Binder {
         public WordLearnerService getService() {
@@ -96,41 +99,43 @@ public class WordLearnerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (started) {
+            Log.d(TAG, "Background service started ");
 
-        if (runAsForegroundService) {
+            if (runAsForegroundService) {
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel serviceChannel = new NotificationChannel(
-                        CHANNEL_ID,
-                        "WordLearnerService Channel",
-                        NotificationManager.IMPORTANCE_HIGH
-                );
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    NotificationChannel serviceChannel = new NotificationChannel(
+                            CHANNEL_ID,
+                            "WordLearnerService Channel",
+                            NotificationManager.IMPORTANCE_HIGH
+                    );
 
-                NotificationManager notificationManager = getSystemService(NotificationManager.class);
-                notificationManager.createNotificationChannel(serviceChannel);
+                    NotificationManager notificationManager = getSystemService(NotificationManager.class);
+                    notificationManager.createNotificationChannel(serviceChannel);
+                }
+
+
+                Intent notificationIntent = new Intent(this, ListActivity.class);
+                PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+                Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_announcement_black_24dp)
+                        .setContentTitle("WordLearnerService")
+                        .setContentText("Word: null")
+                        .setContentIntent(pendingIntent)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                        .build();
+
+                mToastRunnable.run();
+
+                // startForeground(1, notification);
+                notificationManagerCompat.notify(1, notification);
+
             }
-
-
-            Intent notificationIntent = new Intent(this, ListActivity.class);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-
-            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_announcement_black_24dp)
-                    .setContentTitle("WordLearnerService")
-                    .setContentText("Word: null")
-                    .setContentIntent(pendingIntent)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                    .build();
-
-            mToastRunnable.run();
-
-
-            // startForeground(1, notification);
-            notificationManagerCompat.notify(1, notification);
-
         } else {
-            Log.d(LOG, "Background service onStartCommand - already started!");
+            Log.d(TAG, "Background service already started!");
         }
 
         wordRoomDatabase = Room.databaseBuilder(
@@ -151,6 +156,8 @@ public class WordLearnerService extends Service {
 
     @Override
     public void onDestroy() {
+        started = false;
+        Log.d(TAG,"Background service destroyed");
         super.onDestroy();
     }
 
@@ -209,7 +216,7 @@ public class WordLearnerService extends Service {
     }
 
     public void getWord(String nameoftheword) {
-         new GetWordAsyncTask().execute(nameoftheword);
+        new GetWordAsyncTask().execute(nameoftheword);
     }
 
     public void updateWord(String rating, String notes, int position) {
@@ -277,7 +284,6 @@ public class WordLearnerService extends Service {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-
             localBroadcastSender(mWordArrayList);
         }
     }
@@ -331,17 +337,21 @@ public class WordLearnerService extends Service {
     }
 
     private void localBroadcastSender(ArrayList<Word> words) {
+
+        Log.d(TAG, "Using local broadcast to send arraylist ");
+
         Intent intent = new Intent();
         Bundle bundle = new Bundle();
 
         intent.setAction(BROADCAST_BACKGROUND_SERVICE_ARRAYLIST);
         bundle.putSerializable(ARRAY_LIST, (Serializable) mWordArrayList);
         intent.putExtra("Bundle", bundle);
-        Log.d(TAG, "localBroadcastSender: " + words);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     private void localBroadcastWordObjectSender(Word word) {
+        Log.d(TAG, "Using local broadcast to send word object ");
+
         Intent intent = new Intent();
         intent.setAction(BROADCAST_BACKGROUND_SERVICE_WORD);
         intent.putExtra(WORD_OBJECT, word);
@@ -361,7 +371,7 @@ public class WordLearnerService extends Service {
              or even another numbers, so I just found out another way to tell the app that it should only get one random word.
              Inspiration: https://www.youtube.com/watch?v=OhStCBiiOMo
              */
-            for(int i = 0; i < mWordArrayList.size()-5; i++) {
+            for (int i = 0; i < mWordArrayList.size() - 5; i++) {
                 getRandomWord(mWordArrayList);
             }
         }
@@ -382,9 +392,9 @@ public class WordLearnerService extends Service {
                                 "chill. For this reason, I'd like to remind you to keep working hard and keep learning, as it will " +
                                 "benefit you in the end! In the case, you can start off or keep practicing this word: " + words.get(index).getWord()))
                 .setContentIntent(pendingIntent)
-               /* .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .setDefaults(Notification.DEFAULT_VIBRATE)*/
+                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                 .setDefaults(Notification.DEFAULT_VIBRATE)
                 .build();
 
         // startForeground(1, notification);
