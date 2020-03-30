@@ -22,7 +22,7 @@ public class EditActivity extends AppCompatActivity {
 
     private Button cancelBtn, updateBtn;
     private SeekBar seekbar;
-    private TextView wordRating, txtRating, txtName;
+    private TextView txtRating, txtName;
     private EditText txtNote;
     private String ratingInput, txtProgress, word, notesInput, rating, note;
     private float value;

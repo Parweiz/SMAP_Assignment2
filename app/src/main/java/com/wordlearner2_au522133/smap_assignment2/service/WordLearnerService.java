@@ -95,6 +95,15 @@ public class WordLearnerService extends Service {
     public void onCreate() {
         super.onCreate();
         notificationManagerCompat = NotificationManagerCompat.from(this);
+
+        if (wordRoomDatabase == null) {
+            wordRoomDatabase = Room.databaseBuilder(
+                    getApplicationContext(),
+                    WordRoomDatabase.class,
+                    "WordDB")
+                    .build();
+        }
+
     }
 
     @Override
@@ -121,8 +130,11 @@ public class WordLearnerService extends Service {
 
                 Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_announcement_black_24dp)
-                        .setContentTitle("WordLearnerService")
-                        .setContentText("Word: null")
+                        .setContentTitle("Word: null")
+                        .setStyle(new NotificationCompat.BigTextStyle()
+                                .bigText("Eyyyy you. Even though we're in quarantine, it doesn't mean that you can just " +
+                                        "chill. For this reason, I'd like to remind you to keep working hard and keep learning, as it will " +
+                                        "benefit you in the end! In the case, you can start off or keep practicing this word: null "))
                         .setContentIntent(pendingIntent)
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setCategory(NotificationCompat.CATEGORY_MESSAGE)
@@ -138,12 +150,6 @@ public class WordLearnerService extends Service {
             Log.d(TAG, "Background service already started!");
         }
 
-        wordRoomDatabase = Room.databaseBuilder(
-                getApplicationContext(),
-                WordRoomDatabase.class,
-                "WordDB")
-                .build();
-
 
         return START_STICKY;
     }
@@ -157,7 +163,7 @@ public class WordLearnerService extends Service {
     @Override
     public void onDestroy() {
         started = false;
-        Log.d(TAG,"Background service destroyed");
+        Log.d(TAG, "Background service destroyed");
         super.onDestroy();
     }
 
@@ -370,17 +376,23 @@ public class WordLearnerService extends Service {
             Log.d(TAG, "PostDelayed test");
 
            /*  I know that it's not a proper loop, due to statement 2, but the app didn't really allow me to write 1,
-             or even another numbers, so I just found out another way to tell the app that it should only get one random word.
+             or even another numbers, so I found out another way to tell the app that if the size of ArrayList is 6, then it should
+             only pick one of them, by subtracting with 5. Of course, it also has its consequences, as if you add a new word
+             to the arraylist, then the size will be 7, and then it will pick 2 random words of the list.
              Inspiration: https://www.youtube.com/watch?v=OhStCBiiOMo
              */
-            for (int i = 0; i < mWordArrayList.size() - 5; i++) {
+            /*for (int i = 0; i < mWordArrayList.size() - 5; i++) {
                 getRandomWord(mWordArrayList);
+            }*/
+            if(mWordArrayList.size() > 0) {
+
+            getRandomWord(mWordArrayList);
             }
         }
     };
 
     private void getRandomWord(ArrayList<Word> words) {
-        int index = random.nextInt(mWordArrayList.size());
+        int index = random.nextInt(words.size());
         Log.d(TAG, "index: " + index + ", word: " + words.get(index).getWord());
 
         Intent notificationIntent = new Intent(this, ListActivity.class);
@@ -394,9 +406,9 @@ public class WordLearnerService extends Service {
                                 "chill. For this reason, I'd like to remind you to keep working hard and keep learning, as it will " +
                                 "benefit you in the end! In the case, you can start off or keep practicing this word: " + words.get(index).getWord()))
                 .setContentIntent(pendingIntent)
-                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                 .setDefaults(Notification.DEFAULT_VIBRATE)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setDefaults(Notification.DEFAULT_VIBRATE)
                 .build();
 
         // startForeground(1, notification);

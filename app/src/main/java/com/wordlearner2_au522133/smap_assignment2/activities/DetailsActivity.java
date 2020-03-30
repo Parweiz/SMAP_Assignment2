@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import static com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService.ARRAY_LIST;
 import static com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService.WORD_OBJECT;
 
-
 /*As I have already commented in the adapter, I have taken inspiration from the following yt vid to handle clicks
 to retrieve position and then open up DetailsActivity with information about the item / object pressed. Link:
 https://www.youtube.com/watch?v=WtLZK1kh-yM&feature=emb_logo

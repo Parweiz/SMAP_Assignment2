@@ -66,7 +66,6 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
     @Override
     public void onBindViewHolder(@NonNull WordViewHolder holder, int position) {
 
-
         Object mPicture = mWordArrayList.get(position)
                 .getDefinitions()
                 .get(0)
@@ -96,7 +95,6 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
         } else {
             holder.txtRating.setText("0.0");
         }
-
     }
 
     @Override

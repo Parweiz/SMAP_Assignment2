@@ -66,17 +66,17 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
         setUpRecyclerView();
         enableStethos();
         boundServiceFunc();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
 
         Log.d(TAG, "Registering receivers");
 
         Intent intent = new Intent(this, WordLearnerService.class);
         startService(intent);
         bindService(intent, boundService, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(WordLearnerService.BROADCAST_BACKGROUND_SERVICE_ARRAYLIST);
@@ -226,7 +226,7 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
     }
 
 
-    // Taget fra TheSituationRoom demo fra L4
+    // Taken from TheSituationRoom demo from L4
     private void enableStethos() {
         Stetho.initialize(Stetho.newInitializerBuilder(this)
                 .enableDumpapp(
