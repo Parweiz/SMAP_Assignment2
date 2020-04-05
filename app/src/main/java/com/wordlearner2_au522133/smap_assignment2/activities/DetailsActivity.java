@@ -1,6 +1,5 @@
 package com.wordlearner2_au522133.smap_assignment2.activities;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -20,16 +19,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.google.gson.Gson;
 import com.wordlearner2_au522133.smap_assignment2.R;
-import com.wordlearner2_au522133.smap_assignment2.adapter.WordLearnerAdapter;
 import com.wordlearner2_au522133.smap_assignment2.models.Word;
 import com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-
-import static com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService.ARRAY_LIST;
 import static com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService.WORD_OBJECT;
 
 /*As I have already commented in the adapter, I have taken inspiration from the following yt vid to handle clicks
@@ -52,7 +45,7 @@ public class DetailsActivity extends AppCompatActivity {
     WordLearnerService wordLearnerService;
     private ServiceConnection boundService;
     private boolean mBound = false;
-    public static final String TAG = "activity";
+    public static final String TAG = "wordlearner";
     private Word wordObject;
 
     @Override
@@ -68,19 +61,18 @@ public class DetailsActivity extends AppCompatActivity {
         txtNote = findViewById(R.id.txtDetailsNotesText);
 
         setDetailsBtns();
-        boundServiceFunc();
+        boundServiceSetupFunction();
+
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        Intent intent = new Intent(this, WordLearnerService.class);
-        bindService(intent, boundService, Context.BIND_AUTO_CREATE);
+        bindingToTheService();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(WordLearnerService.BROADCAST_BACKGROUND_SERVICE_WORD);
-
         LocalBroadcastManager.getInstance(this).registerReceiver(localBroadcastReceiver, filter);
     }
 
@@ -88,25 +80,35 @@ public class DetailsActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
+        unbindingFromTheService();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(localBroadcastReceiver);
+    }
+
+    private void bindingToTheService() {
+        Log.d(TAG, "Binding to the service from DetailsActivity ");
+        Intent intent = new Intent(this, WordLearnerService.class);
+        bindService(intent, boundService, Context.BIND_AUTO_CREATE);
+    }
+
+    private void unbindingFromTheService() {
+        Log.d(TAG, "Unbinding to the service from DetailsActivity ");
         if (mBound) {
             unbindService(boundService);
             mBound = false;
         }
-
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(localBroadcastReceiver);
     }
 
-    private void boundServiceFunc() {
+    private void boundServiceSetupFunction() {
         boundService = new ServiceConnection() {
             public void onServiceConnected(ComponentName className, IBinder service) {
                 WordLearnerService.LocalBinder binder = (WordLearnerService.LocalBinder) service;
                 wordLearnerService = binder.getService();
+                mBound = true;
+                Log.d(TAG, "Boundservice connected - DetailsActivity");
 
                 word = getIntent().getStringExtra(getString(R.string.key_name));
                 wordLearnerService.getWord(word);
 
-                mBound = true;
-                Log.d(TAG, "Boundservice connected - DetailsActivity");
 
             }
 
@@ -117,6 +119,14 @@ public class DetailsActivity extends AppCompatActivity {
             }
         };
     }
+
+    private BroadcastReceiver localBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            wordObject = (Word) intent.getSerializableExtra(WORD_OBJECT);
+            setDataAfterBroadcast();
+        }
+    };
 
     private void setDetailsBtns() {
         cancelBtn = (Button) findViewById(R.id.cancelDetailsActivityBtn);
@@ -147,18 +157,8 @@ public class DetailsActivity extends AppCompatActivity {
         });
     }
 
-    private BroadcastReceiver localBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            wordObject = (Word) intent.getSerializableExtra(WORD_OBJECT);
-            Log.d(TAG, "onReceive: " + wordObject);
-            setDataAfterBroadcast();
-        }
-    };
-
     private void setDataAfterBroadcast() {
         mPicture = wordObject.getDefinitions().get(0).getImageUrl();
-        Log.d(TAG, "setDataAfterBroadcast: " + mPicture);
         word = wordObject.getWord();
         pronunciation = wordObject.getPronunciation();
         definition = wordObject.getDefinitions().get(0).getDefinition();
@@ -195,8 +195,6 @@ public class DetailsActivity extends AppCompatActivity {
     public void sendingDataToEditActivity() {
         Intent i = new Intent(this, EditActivity.class);
         i.putExtra(getString(R.string.key_name), word);
-        i.putExtra(getString(R.string.key_rating), rating);
-        i.putExtra(getString(R.string.key_notes), note);
         i.putExtra(getString(R.string.key_position), getIntent().getIntExtra(getString(R.string.key_position), 0));
 
         startActivityForResult(i, REQUEST_CODE_EDIT_ACTIVITY);

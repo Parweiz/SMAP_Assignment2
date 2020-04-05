@@ -22,7 +22,10 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".service.WordLearnerService" />
+        <service android:name=".service.WordLearnerService"
+            android:description="@string/service"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>

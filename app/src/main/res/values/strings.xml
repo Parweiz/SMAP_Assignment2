@@ -38,5 +38,11 @@
     <string name="saved">Word saved</string>
     <string name="updated">Word Updated</string>
     <string name="clear_all_data">Clear All Data</string>
+    <string name="notificationtitle">Word: </string>
+    <string name="notificationtext">Eyyyy you. Even though we\'re in quarantine, it doesn\'t mean that you can just
+                                        chill. For this reason, I\'d like to remind you to keep working hard and keep learning, as it will
+                                        benefit you in the end! In the case, you can start off or keep practicing this word:
+    </string>
+    <string name="service" translatable="false">A started service that runs in the background</string>
 
 </resources>

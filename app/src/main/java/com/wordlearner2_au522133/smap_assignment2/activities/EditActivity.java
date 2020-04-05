@@ -1,10 +1,14 @@
 package com.wordlearner2_au522133.smap_assignment2.activities;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -16,7 +20,12 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.wordlearner2_au522133.smap_assignment2.R;
+import com.wordlearner2_au522133.smap_assignment2.models.Word;
 import com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService;
+
+import java.util.ArrayList;
+
+import static com.wordlearner2_au522133.smap_assignment2.service.WordLearnerService.WORD_OBJECT;
 
 public class EditActivity extends AppCompatActivity {
 
@@ -27,10 +36,12 @@ public class EditActivity extends AppCompatActivity {
     private String ratingInput, txtProgress, word, notesInput, rating, note;
     private float value;
     private int valueFromSeekbar, wordPosition;
-    public static final String TAG = "service";
+    public static final String TAG = "wordlearner2";
     WordLearnerService wordLearnerService = new WordLearnerService();
     private ServiceConnection boundService;
     private boolean mBound = false;
+    private ArrayList<Word> mWords = new ArrayList<>();
+    private Word wordObject;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,11 +49,11 @@ public class EditActivity extends AppCompatActivity {
         setContentView(R.layout.activity_edit);
 
         txtName = findViewById(R.id.txtEditNameOfTheWord);
-        txtNote =  findViewById(R.id.edittextEditNotesText);
+        txtNote = findViewById(R.id.edittextEditNotesText);
         txtRating = findViewById(R.id.txtEditRating);
 
         setSeekbar();
-        gettingDataFromDetails();
+       //  gettingDataFromDetails();
         boundServiceFunc();
         setEditBtns();
     }
@@ -50,15 +61,28 @@ public class EditActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        bindingToTheService();
 
-        Intent intent = new Intent(this, WordLearnerService.class);
-        bindService(intent, boundService, Context.BIND_AUTO_CREATE);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(WordLearnerService.BROADCAST_BACKGROUND_SERVICE_WORD);
+        LocalBroadcastManager.getInstance(this).registerReceiver(localBroadcastReceiver, filter);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        unbindingFromTheService();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(localBroadcastReceiver);
+    }
 
+    private void bindingToTheService() {
+        Log.d(TAG, "Binding to the service from EditActivity ");
+        Intent intent = new Intent(this, WordLearnerService.class);
+        bindService(intent, boundService, Context.BIND_AUTO_CREATE);
+    }
+
+    private void unbindingFromTheService() {
+        Log.d(TAG, "Unbinding to the service from EditActivity ");
         if (mBound) {
             unbindService(boundService);
             mBound = false;
@@ -68,13 +92,14 @@ public class EditActivity extends AppCompatActivity {
     private void boundServiceFunc() {
         boundService = new ServiceConnection() {
             public void onServiceConnected(ComponentName className, IBinder service) {
-
                 WordLearnerService.LocalBinder binder = (WordLearnerService.LocalBinder) service;
                 wordLearnerService = binder.getService();
-
                 mBound = true;
                 Log.d(TAG, "Boundservice connected - EditActivity");
 
+                word = getIntent().getStringExtra(getString(R.string.key_name));
+                wordPosition = getIntent().getIntExtra(getString(R.string.key_position), 0);
+                wordLearnerService.getWord(word);
             }
 
             public void onServiceDisconnected(ComponentName className) {
@@ -83,6 +108,34 @@ public class EditActivity extends AppCompatActivity {
                 Log.d(TAG, "Boundservice disconnected - EditActivity");
             }
         };
+    }
+
+    private BroadcastReceiver localBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            wordObject = (Word) intent.getSerializableExtra(WORD_OBJECT);
+            setDataAfterBroadcast();
+        }
+    };
+
+    private void setDataAfterBroadcast() {
+        word = wordObject.getWord();
+        rating = wordObject.getRating();
+        note = wordObject.getNotes();
+
+        txtName.setText(word);
+        txtNote.setText(note);
+
+        if (rating != null) {
+            txtRating.setText(rating);
+            String ratingValue = txtRating.getText().toString();
+            float seekbarValue = Float.parseFloat(ratingValue) * 10;
+            int seekbarProgress = (int) seekbarValue;
+            seekbar.setProgress(seekbarProgress);
+        } else {
+            txtRating.setText("0.0");
+        }
+
     }
 
     private void setSeekbar() {
@@ -150,10 +203,11 @@ public class EditActivity extends AppCompatActivity {
 
         if (rating != null) {
             String ratingValue = txtRating.getText().toString();
-            Log.d(TAG, "gettingDataFromDetails: " + ratingValue);
             float seekbarValue = Float.parseFloat(ratingValue) * 10;
             int seekbarProgress = (int) seekbarValue;
             seekbar.setProgress(seekbarProgress);
         }
     }
+
+
 }

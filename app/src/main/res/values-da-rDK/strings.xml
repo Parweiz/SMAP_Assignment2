@@ -28,4 +28,8 @@
     <string name="updated">Ordet er opdateret</string>
     <string name="pronunciation">Udtalelse</string>
     <string name="clear_all_data">Slet alle dataer</string>
+    <string name="notificationtitle">Ord: null</string>
+    <string name="notificationtext">Eyyyyy. Selvom vi er i karantæne, betyder det ikke, at du bare kan slappe af.
+        Af denne grund vil jeg gerne minde dig om at fortsætte med at arbejde hårdt og fortsætte med at lære, da det vil gavne dig i sidste ende!
+        I tilfældet kan du starte eller fortsætte med at øve dette ord: null</string>
 </resources>

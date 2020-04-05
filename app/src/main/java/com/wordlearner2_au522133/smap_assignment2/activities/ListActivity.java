@@ -2,6 +2,7 @@ package com.wordlearner2_au522133.smap_assignment2.activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -13,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -37,9 +39,6 @@ import static com.wordlearner2_au522133.smap_assignment2.service.WordLearnerServ
 to retrieve position and then open up DetailsActivity with information about the item / object pressed. Link:
 https://www.youtube.com/watch?v=WtLZK1kh-yM&feature=emb_logo
 
-Also, in connection with orientation change, I have chosen to use Parcelable, where inspiration has been taken from:
-https://stackoverflow.com/questions/12503836/how-to-save-custom-arraylist-on-android-screen-rotate
-
 Even though there's not any requirements about you should be able to delete all words, I found it necessary to implement that
 Inspiration:
 https://google-developer-training.github.io/android-developer-advanced-course-practicals/unit-6-working-with-architecture-components/lesson-14-room,-livedata,-viewmodel/14-1-b-room-delete-data/14-1-b-room-delete-data.html#task2intro
@@ -47,12 +46,12 @@ https://google-developer-training.github.io/android-developer-advanced-course-pr
 */
 public class ListActivity extends AppCompatActivity implements WordLearnerAdapter.OnItemListener {
 
-    private ArrayList<Word> mWords = new ArrayList<>();
-    private WordLearnerAdapter mAdapter;
     private static final int REQUEST_CODE_DETAILS_ACTIVITY = 1;
     private int wordClickedIndex;
+    private ArrayList<Word> mWords = new ArrayList<>();
     private EditText editText;
-    public static final String TAG = "service";
+    private WordLearnerAdapter mAdapter;
+    public static final String TAG = "wordlearnerservice";
     private RecyclerView mRecyclerView;
     WordLearnerService wordLearnerService = new WordLearnerService();
     private ServiceConnection boundService;
@@ -65,22 +64,17 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
 
         setUpRecyclerView();
         enableStethos();
-        boundServiceFunc();
+        boundServiceSetupFunction();
 
-        Log.d(TAG, "Registering receivers");
-
-        Intent intent = new Intent(this, WordLearnerService.class);
-        startService(intent);
-        bindService(intent, boundService, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        startingAndBindingToTheService();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(WordLearnerService.BROADCAST_BACKGROUND_SERVICE_ARRAYLIST);
-
         LocalBroadcastManager.getInstance(this).registerReceiver(localBroadcastReceiver, filter);
     }
 
@@ -88,17 +82,24 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
     protected void onStop() {
         super.onStop();
 
-        Log.d(TAG, "Unregistering receivers");
+        unBindingFromTheSerivce();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(localBroadcastReceiver);
+    }
 
+    private void startingAndBindingToTheService() {
+        Log.d(TAG, "Registering receivers and binding to the service");
         Intent intent = new Intent(this, WordLearnerService.class);
+        startService(intent);
+        bindService(intent, boundService, Context.BIND_AUTO_CREATE);
+    }
 
-        stopService(intent);
+    private void unBindingFromTheSerivce() {
+        Log.d(TAG, "Unregistering receivers and unbinding to the service");
+
         if (mBound) {
             unbindService(boundService);
             mBound = false;
         }
-
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(localBroadcastReceiver);
     }
 
     @Override
@@ -120,22 +121,6 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private void initialData() {
-
-        String lion = "lion";
-        String football = "football";
-        String school = "school";
-        String tiger = "tiger";
-        String dog = "dog";
-        String cat = "cat";
-        wordLearnerService.addWord(lion);
-        wordLearnerService.addWord(football);
-        wordLearnerService.addWord(school);
-        wordLearnerService.addWord(tiger);
-        wordLearnerService.addWord(dog);
-        wordLearnerService.addWord(cat);
     }
 
     public void setUpRecyclerView() {
@@ -160,23 +145,16 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
         wordLearnerService.addWord(word);
     }
 
-    private void boundServiceFunc() {
+    private void boundServiceSetupFunction() {
         boundService = new ServiceConnection() {
             public void onServiceConnected(ComponentName className, IBinder service) {
 
                 WordLearnerService.LocalBinder binder = (WordLearnerService.LocalBinder) service;
                 wordLearnerService = binder.getService();
-
-                if (mWords.size() == 0) {
-                    initialData();
-
-                }
-
-                wordLearnerService.getAllWords();
-
                 mBound = true;
                 Log.d(TAG, "Boundservice connected - ListActivity");
 
+                wordLearnerService.getAllWords();
             }
 
             public void onServiceDisconnected(ComponentName className) {
@@ -196,7 +174,6 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
             mWords = (ArrayList<Word>) bundle.getSerializable(ARRAY_LIST);
 
             mAdapter.updateData(mWords);
-            mAdapter.notifyDataSetChanged();
         }
     };
 
@@ -224,7 +201,6 @@ public class ListActivity extends AppCompatActivity implements WordLearnerAdapte
             }
         }
     }
-
 
     // Taken from TheSituationRoom demo from L4
     private void enableStethos() {

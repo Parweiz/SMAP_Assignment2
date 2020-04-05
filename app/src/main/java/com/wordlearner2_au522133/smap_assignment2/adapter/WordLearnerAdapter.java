@@ -110,6 +110,7 @@ public class WordLearnerAdapter extends RecyclerView.Adapter<WordLearnerAdapter.
 
     public void updateData(ArrayList<Word> newList) {
         mWordArrayList = newList;
+        notifyDataSetChanged();
     }
 
 }

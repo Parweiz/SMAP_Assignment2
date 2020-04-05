@@ -48,13 +48,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /*
 In connection with implementing methods in WordDao, I have taken inspiration from the following yt vid:
 https://www.youtube.com/watch?v=EguY40n84Xo
 
 Besides that, I've also taken inspiration from the following demo and links to figure out how to bind to a service,
-how to start a foreground service, how to send a local broadcast and how to retrieve it:
+how to start a foreground service, how to let the background service to run all the time,
+how to randomize a word recursively and how to send a local broadcast and how to retrieve it:
 - ServiceDemo app from L5
 - https://developer.android.com/guide/components/bound-services
 - https://www.youtube.com/watch?v=FbpD5RZtbCc&t=27s
@@ -73,17 +76,19 @@ public class WordLearnerService extends Service {
     public static final String BROADCAST_BACKGROUND_SERVICE_WORD = "com.wordlearner2_au522133.smap_assignment2.BROADCAST_BACKGROUND_SERVICE_WORD";
     public static final String ARRAY_LIST = "arraylist";
     public static final String WORD_OBJECT = "word";
-    public static final String TAG = "main";
+    public static final String TAG = "wordlearnerservice";
+    public static final String CHANNEL_ID = "au522133_wordlearner2_channelname";
+    public static final String API_TOKEN = "9ea49e1ccb828fd7736d981aa3b027571da9ae86";
+    public static final int NOTIFICATION_ID = 1;
+    private CharSequence CHANNEL_NAME = "WordLearnerService Channel";
+
     private ArrayList<Word> mWordArrayList = new ArrayList<Word>();
     private boolean runAsForegroundService = true;
-    public static final String CHANNEL_ID = "exampleServiceChannel";
     private WordRoomDatabase wordRoomDatabase;
     private RequestQueue queue;
-    final String API_TOKEN = "9ea49e1ccb828fd7736d981aa3b027571da9ae86";
-    private NotificationManagerCompat notificationManagerCompat;
-    private Handler mHandler = new Handler();
     private Random random = new Random();
-    private boolean started = true;
+    private boolean started = false;
+    private ExecutorService execService;
 
     public class LocalBinder extends Binder {
         public WordLearnerService getService() {
@@ -94,7 +99,6 @@ public class WordLearnerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        notificationManagerCompat = NotificationManagerCompat.from(this);
 
         if (wordRoomDatabase == null) {
             wordRoomDatabase = Room.databaseBuilder(
@@ -108,15 +112,16 @@ public class WordLearnerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (started) {
+        if (!started) {
             Log.d(TAG, "Background service started ");
+            started = true;
 
             if (runAsForegroundService) {
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     NotificationChannel serviceChannel = new NotificationChannel(
                             CHANNEL_ID,
-                            "WordLearnerService Channel",
+                            CHANNEL_NAME,
                             NotificationManager.IMPORTANCE_HIGH
                     );
 
@@ -126,32 +131,62 @@ public class WordLearnerService extends Service {
 
 
                 Intent notificationIntent = new Intent(this, ListActivity.class);
-                PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+                PendingIntent pendingIntent = PendingIntent.getActivity(
+                        this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+                // As default (aka when you run the app first time), it will just run through this notification
+                // and will not suggest a word. For that reason, I've chosen to just type null pr. default.
+                // After a whole minute it will then suggest a random word with the help off "recursiveSleepWork" function.
                 Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_announcement_black_24dp)
-                        .setContentTitle("Word: null")
+                        .setContentTitle(getString(R.string.notificationtitle) + " null")
                         .setStyle(new NotificationCompat.BigTextStyle()
-                                .bigText("Eyyyy you. Even though we're in quarantine, it doesn't mean that you can just " +
-                                        "chill. For this reason, I'd like to remind you to keep working hard and keep learning, as it will " +
-                                        "benefit you in the end! In the case, you can start off or keep practicing this word: null "))
+                                .bigText(getString(R.string.notificationtext) + " null"))
+                        .setAutoCancel(true)
                         .setContentIntent(pendingIntent)
-                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setPriority(NotificationCompat.PRIORITY_MAX)
                         .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                         .build();
 
-                mToastRunnable.run();
-
-                // startForeground(1, notification);
-                notificationManagerCompat.notify(1, notification);
+                startForeground(NOTIFICATION_ID, notification);
 
             }
+
+            // sleep time for 60 secs
+             recursiveSleepWork(60000L);
         } else {
             Log.d(TAG, "Background service already started!");
         }
 
 
-        return START_STICKY;
+        return START_NOT_STICKY;
+    }
+
+
+    private void recursiveSleepWork(final Long sleepTime) {
+        if (execService == null) {
+            execService = Executors.newSingleThreadExecutor();
+        }
+
+        execService.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Log.d(TAG, "Task started");
+                    if (mWordArrayList.size() > 0) {
+                        getRandomWord(mWordArrayList);
+                    }
+                    Log.d(TAG, "Task completed - Will now sleep for 1 min");
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                if (started) {
+                    recursiveSleepWork(sleepTime);
+                }
+            }
+        });
     }
 
     @Nullable
@@ -350,7 +385,7 @@ public class WordLearnerService extends Service {
         Bundle bundle = new Bundle();
 
         intent.setAction(BROADCAST_BACKGROUND_SERVICE_ARRAYLIST);
-        bundle.putSerializable(ARRAY_LIST, (Serializable) mWordArrayList);
+        bundle.putSerializable(ARRAY_LIST, words);
         intent.putExtra("Bundle", bundle);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
@@ -365,54 +400,28 @@ public class WordLearnerService extends Service {
     }
 
 
-    /*This function delays and repeat code execution using Handler PostDelayed.
-    Inspiration: https://www.youtube.com/watch?v=3pgGVBmSVq0  */
-    private Runnable mToastRunnable = new Runnable() {
-        @Override
-        public void run() {
-            // Comments to the video around 1:23-1:30: It's supposed to delay and execute it every min, but some reason
-            // it should goes from lion to dog and in a few secounds and I don't really get why it does that.
-            mHandler.postDelayed(this, 60000);
-            Log.d(TAG, "PostDelayed test");
-
-           /*  I know that it's not a proper loop, due to statement 2, but the app didn't really allow me to write 1,
-             or even another numbers, so I found out another way to tell the app that if the size of ArrayList is 6, then it should
-             only pick one of them, by subtracting with 5. Of course, it also has its consequences, as if you add a new word
-             to the arraylist, then the size will be 7, and then it will pick 2 random words of the list.
-             Inspiration: https://www.youtube.com/watch?v=OhStCBiiOMo
-             */
-            /*for (int i = 0; i < mWordArrayList.size() - 5; i++) {
-                getRandomWord(mWordArrayList);
-            }*/
-            if(mWordArrayList.size() > 0) {
-
-            getRandomWord(mWordArrayList);
-            }
-        }
-    };
-
     private void getRandomWord(ArrayList<Word> words) {
         int index = random.nextInt(words.size());
         Log.d(TAG, "index: " + index + ", word: " + words.get(index).getWord());
 
         Intent notificationIntent = new Intent(this, ListActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_announcement_black_24dp)
-                .setContentTitle("Word: " + words.get(index).getWord())
+                .setContentTitle(getString(R.string.notificationtitle) + " " + words.get(index).getWord())
+
                 .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText("Eyyyy you. Even though we're in quarantine, it doesn't mean that you can just " +
-                                "chill. For this reason, I'd like to remind you to keep working hard and keep learning, as it will " +
-                                "benefit you in the end! In the case, you can start off or keep practicing this word: " + words.get(index).getWord()))
+                        .bigText(getString(R.string.notificationtext) + " " + words.get(index).getWord()))
+                .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setDefaults(Notification.DEFAULT_VIBRATE)
                 .build();
 
-        // startForeground(1, notification);
-        notificationManagerCompat.notify(1, notification);
+        startForeground(NOTIFICATION_ID, notification);
     }
 }
 
